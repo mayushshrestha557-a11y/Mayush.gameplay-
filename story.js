@@ -17,7 +17,7 @@ export function startStory(onStart) {
       </div>
 
       <div class="mayush-photo">
-        <img src="./IMG_2348.JPG" alt="Mayush">
+        <img src="./IMG_3248.JPG" alt="Mayush">
         <h2>MAYUSH</h2>
       </div>
 
