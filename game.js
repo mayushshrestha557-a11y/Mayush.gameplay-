@@ -658,3 +658,15 @@ startStory(() => {
 animate();
 
 console.log("NAYABASTI OPEN WORLD READY");
+
+async function setupMobileGame() {
+  if (screen.orientation && screen.orientation.lock) {
+    try {
+      await screen.orientation.lock("landscape");
+    } catch (error) {
+      console.log("Landscape lock not supported");
+    }
+  }
+}
+
+setupMobileGame();
