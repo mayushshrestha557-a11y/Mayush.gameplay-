@@ -9,21 +9,38 @@
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#000000">
 
-  <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="./style.css">
+  <meta name="theme-color" content="#87ceeb">
 
   <title>MAYUSH.GAMEPLAY</title>
+
+  <link rel="stylesheet" href="./style.css">
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+    }
+  }
+  </script>
 </head>
 
 <body>
 
-  <div id="loading">
-    <div>
-      <h1>MAYUSH.GAMEPLAY</h1>
-      <p>Entering Nayabasti...</p>
-    </div>
+  <div id="loading" style="
+    position:fixed;
+    inset:0;
+    background:#101820;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:10;
+    font-family:Arial;
+  ">
+    <h2>MAYUSH.GAMEPLAY</h2>
+    <p>Entering Nayabasti...</p>
   </div>
 
   <script type="module" src="./game.js"></script>
