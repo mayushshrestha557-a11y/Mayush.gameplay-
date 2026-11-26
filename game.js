@@ -1466,3 +1466,394 @@ window.addEventListener("resize",()=>{
     Math.min(devicePixelRatio||1,1.25)
   );
 });
+
+
+/* =========================================
+   NAYABASTI TERAI — VILLAGE LIFE UPGRADE
+   Add at the VERY END of game.js
+========================================= */
+
+const villageAnimals = [];
+const villageDetails = [];
+
+// Extra materials
+const animalMats = {
+  cow: mat(0xe5dfc9),
+  cowPatch: mat(0x49423a),
+  buffalo: mat(0x292b2b),
+  goat: mat(0xb9a58a),
+  dog: mat(0xb58a5e),
+  nose: mat(0x30221b),
+  horn: mat(0xd7c7a0),
+  hay: mat(0xc4a04c),
+  wood: mat(0x65452b),
+  pole: mat(0x777d79),
+  wire: mat(0x303536)
+};
+
+function makeAnimal(type, x, z, scale = 1) {
+  const g = new THREE.Group();
+
+  const bodyMat = animalMats[type];
+  const body = new THREE.Mesh(
+    new THREE.SphereGeometry(0.65, 18, 14),
+    bodyMat
+  );
+
+  body.scale.set(1.15, 0.78, 0.72);
+  body.position.y = 0.95;
+  body.castShadow = true;
+  g.add(body);
+
+  const head = new THREE.Group();
+  head.position.set(0, 1.15, 0.62);
+  g.add(head);
+
+  const headMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      type === "dog" ? 0.27 : 0.31,
+      14,
+      12
+    ),
+    bodyMat
+  );
+  headMesh.position.z = 0.18;
+  headMesh.castShadow = true;
+  head.add(headMesh);
+
+  const muzzle = new THREE.Mesh(
+    new THREE.SphereGeometry(0.16, 12, 10),
+    animalMats.nose
+  );
+  muzzle.position.set(0, -0.08, 0.43);
+  head.add(muzzle);
+
+  // Ears
+  for (const s of [-1, 1]) {
+    const ear = new THREE.Mesh(
+      new THREE.SphereGeometry(0.13, 10, 8),
+      bodyMat
+    );
+    ear.scale.set(1.5, 0.55, 0.7);
+    ear.position.set(s * 0.27, 0.12, 0.12);
+    ear.rotation.z = s * -0.25;
+    head.add(ear);
+  }
+
+  // Horns for cow, buffalo and goat
+  if (type !== "dog") {
+    for (const s of [-1, 1]) {
+      const horn = new THREE.Mesh(
+        new THREE.ConeGeometry(0.075, 0.38, 8),
+        animalMats.horn
+      );
+      horn.position.set(s * 0.2, 0.39, 0.08);
+      horn.rotation.z = s * -0.45;
+      head.add(horn);
+    }
+  }
+
+  // Cow patches
+  if (type === "cow") {
+    for (let i = 0; i < 3; i++) {
+      const patch = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 10, 8),
+        animalMats.cowPatch
+      );
+      patch.scale.set(1.1, 0.7, 0.25);
+      patch.position.set(
+        (i - 1) * 0.38,
+        1.25 + (i % 2) * 0.13,
+        -0.18
+      );
+      g.add(patch);
+    }
+  }
+
+  // Four legs
+  const legs = [];
+
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      const leg = new THREE.Group();
+      leg.position.set(sx * 0.39, 0.72, sz * 0.39);
+
+      const limb = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          0.075,
+          0.095,
+          type === "goat" ? 0.72 : 0.65,
+          9
+        ),
+        bodyMat
+      );
+      limb.position.y = -0.3;
+      limb.castShadow = true;
+      leg.add(limb);
+
+      const hoof = new THREE.Mesh(
+        new THREE.BoxGeometry(0.17, 0.12, 0.18),
+        animalMats.nose
+      );
+      hoof.position.y = -0.64;
+      leg.add(hoof);
+
+      g.add(leg);
+      legs.push(leg);
+    }
+  }
+
+  // Tail
+  const tail = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.025, 0.045, 0.65, 7),
+    bodyMat
+  );
+  tail.position.set(0, 1.05, -0.78);
+  tail.rotation.x = -0.55;
+  g.add(tail);
+
+  g.scale.setScalar(scale);
+  g.position.set(x, 0, z);
+  scene.add(g);
+
+  villageAnimals.push({
+    mesh: g,
+    head,
+    legs,
+    tail,
+    phase: Math.random() * 6,
+    type
+  });
+
+  return g;
+}
+
+// Animals around village houses
+makeAnimal("cow", -17, -77, 1.05);
+makeAnimal("cow", 31, -94, 1.0);
+makeAnimal("buffalo", -33, -39, 1.12);
+makeAnimal("buffalo", 34, 68, 1.08);
+makeAnimal("goat", -18, 42, 0.72);
+makeAnimal("goat", 30, 132, 0.75);
+makeAnimal("goat", -39, 100, 0.72);
+makeAnimal("dog", 8, -22, 0.72);
+makeAnimal("dog", -12, 112, 0.75);
+
+// Haystacks
+function makeHaystack(x, z, size = 1) {
+  const h = new THREE.Group();
+
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      0.9 * size,
+      1.15 * size,
+      1.1 * size,
+      14
+    ),
+    animalMats.hay
+  );
+  base.position.y = 0.55 * size;
+  base.castShadow = true;
+  h.add(base);
+
+  const top = new THREE.Mesh(
+    new THREE.ConeGeometry(1.05 * size, 1.1 * size, 14),
+    animalMats.hay
+  );
+  top.position.y = 1.55 * size;
+  top.castShadow = true;
+  h.add(top);
+
+  h.position.set(x, 0, z);
+  scene.add(h);
+  villageDetails.push(h);
+}
+
+makeHaystack(-34, -91, 1.1);
+makeHaystack(36, -42, 0.9);
+makeHaystack(-39, 78, 1.0);
+makeHaystack(38, 155, 1.1);
+
+// Wooden village fences
+function makeFence(x, z, length, rotation = 0) {
+  const f = new THREE.Group();
+
+  const sections = Math.max(2, Math.floor(length / 2));
+
+  for (let i = 0; i <= sections; i++) {
+    const px = -length / 2 + (length / sections) * i;
+
+    const post = new THREE.Mesh(
+      new THREE.BoxGeometry(0.14, 1.2, 0.14),
+      animalMats.wood
+    );
+    post.position.set(px, 0.6, 0);
+    post.castShadow = true;
+    f.add(post);
+  }
+
+  for (const y of [0.38, 0.9]) {
+    const rail = new THREE.Mesh(
+      new THREE.BoxGeometry(length, 0.12, 0.12),
+      animalMats.wood
+    );
+    rail.position.y = y;
+    rail.castShadow = true;
+    f.add(rail);
+  }
+
+  f.position.set(x, 0, z);
+  f.rotation.y = rotation;
+  scene.add(f);
+}
+
+makeFence(-39, -72, 16);
+makeFence(-39, -72, 12, Math.PI / 2);
+makeFence(38, -82, 17);
+makeFence(38, -82, 12, Math.PI / 2);
+makeFence(-42, 91, 18);
+makeFence(39, 143, 16);
+
+// Electric poles and overhead wires
+function makeElectricPole(x, z) {
+  const p = new THREE.Group();
+
+  const post = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.13, 0.19, 10, 10),
+    animalMats.pole
+  );
+  post.position.y = 5;
+  post.castShadow = true;
+  p.add(post);
+
+  const crossbar = new THREE.Mesh(
+    new THREE.BoxGeometry(3.2, 0.16, 0.18),
+    animalMats.wood
+  );
+  crossbar.position.y = 9.2;
+  p.add(crossbar);
+
+  for (const s of [-1, 0, 1]) {
+    const insulator = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.09, 0.09, 0.4, 8),
+      animalMats.white || M.white
+    );
+    insulator.position.set(s * 1.15, 9.48, 0);
+    p.add(insulator);
+  }
+
+  p.position.set(x, 0, z);
+  scene.add(p);
+  villageDetails.push(p);
+}
+
+for (let z = -190; z <= 190; z += 38) {
+  makeElectricPole(-10, z);
+  makeElectricPole(10, z);
+}
+
+// Wire between poles
+function makeWire(x1, z1, x2, z2, y = 9.5) {
+  const curve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(x1, y, z1),
+    new THREE.Vector3((x1 + x2) / 2, y - 1.1, (z1 + z2) / 2),
+    new THREE.Vector3(x2, y, z2)
+  );
+
+  const wire = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 20, 0.025, 5, false),
+    animalMats.wire
+  );
+  scene.add(wire);
+}
+
+for (let z = -190; z < 190; z += 38) {
+  makeWire(-10, z, -10, z + 38);
+  makeWire(10, z, 10, z + 38);
+}
+
+// Banana plant clusters
+function makeBananaCluster(x, z) {
+  for (let i = 0; i < 4; i++) {
+    bananaTree(
+      x + (Math.random() - 0.5) * 4,
+      z + (Math.random() - 0.5) * 4
+    );
+  }
+}
+
+makeBananaCluster(-36, -15);
+makeBananaCluster(37, 35);
+makeBananaCluster(-40, 145);
+makeBananaCluster(42, -145);
+
+// Small outdoor water pots
+function makeWaterPot(x, z) {
+  const pot = new THREE.Group();
+
+  const clay = mat(0x9b5940);
+
+  const body = new THREE.Mesh(
+    new THREE.SphereGeometry(0.38, 14, 12),
+    clay
+  );
+  body.scale.set(1, 1.15, 1);
+  body.position.y = 0.4;
+  pot.add(body);
+
+  const opening = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.19, 0.23, 0.12, 14),
+    clay
+  );
+  opening.position.y = 0.82;
+  pot.add(opening);
+
+  const water = new THREE.Mesh(
+    new THREE.CircleGeometry(0.16, 14),
+    M.water
+  );
+  water.rotation.x = -Math.PI / 2;
+  water.position.y = 0.89;
+  pot.add(water);
+
+  pot.position.set(x, 0, z);
+  scene.add(pot);
+}
+
+makeWaterPot(-18, -88);
+makeWaterPot(30, -12);
+makeWaterPot(-32, 55);
+makeWaterPot(28, 108);
+
+// Animal idle and grazing animation
+const animalClock = new THREE.Clock();
+
+function animateVillageAnimals() {
+  requestAnimationFrame(animateVillageAnimals);
+
+  const t = animalClock.getElapsedTime();
+
+  for (const a of villageAnimals) {
+    const phase = t * 2 + a.phase;
+
+    a.head.rotation.x =
+      a.type === "cow" || a.type === "buffalo"
+        ? Math.sin(phase * 0.5) * 0.08
+        : Math.sin(phase) * 0.12;
+
+    a.tail.rotation.x = -0.55 + Math.sin(phase * 2) * 0.3;
+    a.tail.rotation.z = Math.sin(phase * 1.4) * 0.25;
+
+    for (let i = 0; i < a.legs.length; i++) {
+      a.legs[i].rotation.x =
+        Math.sin(phase + i * Math.PI / 2) * 0.035;
+    }
+
+    a.mesh.position.y =
+      Math.abs(Math.sin(phase)) * 0.012;
+  }
+}
+
+animateVillageAnimals();
+
+console.log("Nayabasti village life upgrade loaded.");
