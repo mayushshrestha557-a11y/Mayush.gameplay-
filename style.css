@@ -213,3 +213,34 @@ canvas {
   margin-top: 10px;
   background: #283b35;
 }
+
+ #rotate-message {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #101820;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  gap: 15px;
+  font-family: Arial, sans-serif;
+}
+
+@media screen and (orientation: portrait) {
+  #rotate-message {
+    display: flex;
+  }
+
+  #mayush-controls {
+    display: none;
+  }
+}
+
+@media screen and (orientation: landscape) {
+  #rotate-message {
+    display: none;
+  }
+}
