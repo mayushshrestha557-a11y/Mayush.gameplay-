@@ -2,38 +2,32 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 
-/* =========================================
-   MAYUSH GAMEPLAY — NAYABASTI TERAI
-   COMPLETE MOBILE 3D GAME
-========================================= */
+/* MAYUSH GAMEPLAY — NAYABASTI TERAI
+   Mobile 3D village game
+   Fixed joystick + running animation + vehicle drivers
+*/
 
-document.documentElement.style.cssText =
-  "margin:0;width:100%;height:100%;overflow:hidden";
-
-document.body.style.cssText =
-  "margin:0;width:100%;height:100%;overflow:hidden;background:#9bb8c2;touch-action:none;user-select:none";
+document.documentElement.style.cssText = "margin:0;width:100%;height:100%;overflow:hidden";
+document.body.style.cssText = "margin:0;width:100%;height:100%;overflow:hidden;background:#9bb8c2;touch-action:none;user-select:none";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9bb8c2);
 scene.fog = new THREE.Fog(0x9bb8c2, 100, 340);
 
-const camera = new THREE.PerspectiveCamera(
-  62, innerWidth / innerHeight, 0.1, 500
-);
+const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, .1, 500);
 
 const renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  powerPreference: "high-performance"
+  antialias:true,
+  powerPreference:"high-performance"
 });
 
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.25));
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.25));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
 renderer.domElement.style.cssText =
   "position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none";
 
@@ -41,49 +35,53 @@ document.body.appendChild(renderer.domElement);
 
 /* LOADING */
 
-const loading = document.createElement("div");
-loading.style.cssText =
+const loading=document.createElement("div");
+
+loading.style.cssText=
   "position:fixed;inset:0;z-index:100;background:#182a25;color:white;display:flex;align-items:center;justify-content:center;flex-direction:column;font:14px Arial;gap:12px";
 
-loading.innerHTML = `
-<div style="font-size:28px;font-weight:900">MAYUSH</div>
-<div id="loadtext">BUILDING NAYABASTI...</div>
-<div style="width:190px;height:5px;background:#555;border-radius:8px">
-<div id="loadbar" style="width:5%;height:5px;background:#e5c16c"></div>
-</div>`;
+loading.innerHTML=
+  '<div style="font-size:28px;font-weight:900">MAYUSH</div><div id="loadtext">BUILDING NAYABASTI...</div><div style="width:190px;height:5px;background:#555;border-radius:8px"><div id="loadbar" style="width:5%;height:5px;background:#e5c16c"></div></div>';
 
 document.body.appendChild(loading);
 
-function status(t,p) {
-  document.getElementById("loadtext").textContent=t;
-  document.getElementById("loadbar").style.width=p+"%";
+function status(t,p){
+  const a=document.getElementById("loadtext");
+  const b=document.getElementById("loadbar");
+  if(a)a.textContent=t;
+  if(b)b.style.width=p+"%";
 }
 
-/* LIGHT */
+/* LIGHTS */
 
-const hemi = new THREE.HemisphereLight(0xdcecff,0x596047,1.6);
-scene.add(hemi);
+scene.add(new THREE.HemisphereLight(0xdcecff,0x596047,1.6));
 
-const sun = new THREE.DirectionalLight(0xffe5bd,2.5);
+const sun=new THREE.DirectionalLight(0xffe5bd,2.5);
 sun.position.set(-45,85,45);
 sun.castShadow=true;
 sun.shadow.mapSize.set(1024,1024);
-sun.shadow.camera.left=-100;
-sun.shadow.camera.right=100;
-sun.shadow.camera.top=100;
-sun.shadow.camera.bottom=-100;
-sun.shadow.camera.far=220;
+
+Object.assign(sun.shadow.camera,{
+  left:-100,
+  right:100,
+  top:100,
+  bottom:-100,
+  far:220
+});
+
 scene.add(sun);
 
 /* MATERIALS */
 
-function mat(c,r=1,m=0) {
+function mat(c,r=1,m=0){
   return new THREE.MeshStandardMaterial({
-    color:c,roughness:r,metalness:m
+    color:c,
+    roughness:r,
+    metalness:m
   });
 }
 
-const M = {
+const M={
   grass:mat(0x71864b),
   crop:mat(0x89994c),
   dirt:mat(0x98764e),
@@ -98,23 +96,26 @@ const M = {
   white:mat(0xe5e1d5)
 };
 
-function box(parent,x,y,z,sx,sy,sz,material) {
+function box(parent,x,y,z,sx,sy,sz,material){
   const o=new THREE.Mesh(
-    new THREE.BoxGeometry(sx,sy,sz),material
+    new THREE.BoxGeometry(sx,sy,sz),
+    material
   );
+
   o.position.set(x,y,z);
   o.castShadow=true;
   o.receiveShadow=true;
   parent.add(o);
+
   return o;
 }
 
-/* GROUND TEXTURE */
+/* GROUND */
 
 const canvas=document.createElement("canvas");
 canvas.width=canvas.height=256;
-const ctx=canvas.getContext("2d");
 
+const ctx=canvas.getContext("2d");
 ctx.fillStyle="#71864b";
 ctx.fillRect(0,0,256,256);
 
@@ -136,14 +137,15 @@ const ground=new THREE.Mesh(
   new THREE.PlaneGeometry(500,500),
   M.grass
 );
+
 ground.rotation.x=-Math.PI/2;
 ground.position.y=-.08;
 ground.receiveShadow=true;
 scene.add(ground);
 
-/* 3D GRASS */
+/* GRASS */
 
-function createGrass() {
+{
   const geo=new THREE.PlaneGeometry(.14,.68,1,2);
   geo.translate(0,.34,0);
 
@@ -153,17 +155,19 @@ function createGrass() {
     side:THREE.DoubleSide
   });
 
-  const count=2800;
-  const grass=new THREE.InstancedMesh(geo,material,count);
-  const dummy=new THREE.Object3D();
+  const count=1800;
+  const grass=new THREE.InstancedMesh(
+    geo,material,count
+  );
 
+  const dummy=new THREE.Object3D();
   let n=0;
 
-  for(let i=0;i<count*2 && n<count;i++){
+  for(let i=0;i<count*2&&n<count;i++){
     const x=(Math.random()-.5)*470;
     const z=(Math.random()-.5)*470;
 
-    if(Math.abs(x)<7.5) continue;
+    if(Math.abs(x)<7.5)continue;
 
     dummy.position.set(x,.02,z);
     dummy.rotation.y=Math.random()*Math.PI;
@@ -182,9 +186,7 @@ function createGrass() {
   scene.add(grass);
 }
 
-createGrass();
-
-/* ROAD */
+/* ROADS */
 
 box(scene,0,0,0,12,.16,420,M.road);
 box(scene,-6.5,.02,0,1,.12,420,M.dirt);
@@ -194,14 +196,10 @@ for(let z=-200;z<210;z+=14){
   box(scene,0,.09,z,.14,.025,4.2,mat(0xd5ad4c));
 }
 
-/* VILLAGE PATHS */
-
 box(scene,-11,0,-35,85,.13,6,M.dirt);
 box(scene,40,0,60,85,.13,6,M.dirt);
 box(scene,-45,0,125,70,.13,6,M.dirt);
 box(scene,38,0,-125,75,.13,6,M.dirt);
-
-/* DRAINAGE */
 
 for(const side of [-1,1]){
   box(scene,side*8.2,-.01,0,.5,.28,420,mat(0x858782));
@@ -210,27 +208,28 @@ for(const side of [-1,1]){
 
 /* FIELDS */
 
-function makeField(x,z,w,d) {
+function makeField(x,z,w,d){
   box(scene,x,.005,z,w,.08,d,M.crop);
 
   const geo=new THREE.ConeGeometry(.13,.8,5);
   const cropMat=mat(0x8d9c43);
-  const count=Math.floor(w/3)*Math.floor(d/4);
 
+  const count=Math.floor(w/3)*Math.floor(d/4);
   const crops=new THREE.InstancedMesh(geo,cropMat,count);
   const dummy=new THREE.Object3D();
+
   let i=0;
 
   for(let px=-w/2+2;px<w/2-1;px+=3){
     for(let pz=-d/2+2;pz<d/2-1;pz+=4){
       dummy.position.set(x+px,.4,z+pz);
       dummy.rotation.y=Math.random()*.5;
-      dummy.scale.set(.8,1,1);
       dummy.updateMatrix();
       crops.setMatrixAt(i++,dummy.matrix);
     }
   }
 
+  crops.count=i;
   crops.instanceMatrix.needsUpdate=true;
   scene.add(crops);
 }
@@ -241,14 +240,13 @@ makeField(-82,65,95,100);
 makeField(83,100,100,90);
 makeField(-75,180,90,45);
 
-/* CANALS */
-
-function canal(x,z,w,length,rotation=0){
+function canal(x,z,w,len,rotation=0){
   const g=new THREE.Group();
-  box(g,0,.02,0,w,.12,length,M.water);
 
-  for(const side of [-1,1]){
-    box(g,side*(w/2+.3),.03,0,.55,.32,length,M.dirt);
+  box(g,0,.02,0,w,.12,len,M.water);
+
+  for(const s of [-1,1]){
+    box(g,s*(w/2+.3),.03,0,.55,.32,len,M.dirt);
   }
 
   g.position.set(x,0,z);
@@ -260,22 +258,22 @@ canal(-125,0,2.5,360);
 canal(130,20,2.5,350);
 canal(0,-165,2.2,250,Math.PI/2);
 
-/* PONDS */
-
 function pond(x,z,rx,rz){
-  const water=new THREE.Mesh(
-    new THREE.CircleGeometry(1,48),M.water
+  const w=new THREE.Mesh(
+    new THREE.CircleGeometry(1,48),
+    M.water
   );
-  water.rotation.x=-Math.PI/2;
-  water.scale.set(rx,rz,1);
-  water.position.set(x,.04,z);
-  scene.add(water);
+
+  w.rotation.x=-Math.PI/2;
+  w.scale.set(rx,rz,1);
+  w.position.set(x,.04,z);
+  scene.add(w);
 }
 
 pond(-48,-20,12,8);
 pond(55,145,15,10);
 
-/* EXTERNAL 3D MODELS */
+/* OPTIONAL EXTERNAL MODELS */
 
 const BASE="https://raw.githubusercontent.com/trebeljahr/quaternius-showcase/main/public/glb/";
 
@@ -304,29 +302,30 @@ async function prepareAssets(){
 
   await Promise.all(names.map(async name=>{
     try{
-      const timeout=new Promise((_,reject)=>
-        setTimeout(()=>reject(Error("Timeout")),9000)
-      );
-
       const result=await Promise.race([
-        loadModel(ASSETS[name]),timeout
+        loadModel(ASSETS[name]),
+        new Promise((_,reject)=>
+          setTimeout(()=>reject(Error("timeout")),6500)
+        )
       ]);
 
       cache[name]=result;
     }catch(e){
-      console.warn("Using fallback:",name,e);
+      console.warn("Fallback model:",name,e);
       cache[name]=null;
     }
 
     done++;
-    status("Loading 3D assets "+done+"/"+names.length,
-      10+Math.round(done/names.length*75));
+    status(
+      "Loading 3D assets "+done+"/"+names.length,
+      10+Math.round(done/names.length*75)
+    );
   }));
 }
 
 function makeAsset(name,height){
   const source=cache[name];
-  if(!source) return null;
+  if(!source)return null;
 
   const model=SkeletonUtils.clone(source.scene);
 
@@ -341,17 +340,17 @@ function makeAsset(name,height){
   const size=new THREE.Vector3();
   bounds.getSize(size);
 
-  if(size.y<=0) return null;
+  if(size.y<=0)return null;
 
   model.scale.setScalar(height/size.y);
 
-  const newBounds=new THREE.Box3().setFromObject(model);
-  const center=new THREE.Vector3();
-  newBounds.getCenter(center);
+  const b=new THREE.Box3().setFromObject(model);
+  const c=new THREE.Vector3();
+  b.getCenter(c);
 
-  model.position.x-=center.x;
-  model.position.z-=center.z;
-  model.position.y-=newBounds.min.y;
+  model.position.x-=c.x;
+  model.position.z-=c.z;
+  model.position.y-=b.min.y;
 
   return model;
 }
@@ -359,110 +358,127 @@ function makeAsset(name,height){
 /* HOUSES */
 
 function makeHouse(name,x,z){
-  let house=makeAsset(name,8);
+  let h=makeAsset(name,8);
 
-  if(!house){
-    house=new THREE.Group();
+  if(!h){
+    h=new THREE.Group();
 
     const wall=mat(0xc9b18c);
     const roof=mat(0x704333);
     const door=mat(0x493126);
-    const windowMat=mat(0x78a4b0,.25);
+    const win=mat(0x78a4b0,.25);
 
-    box(house,0,2.2,0,13,4.4,9,wall);
-    box(house,0,4.7,0,14,.3,10,roof);
-    box(house,0,1.1,4.55,1.5,2.2,.1,door);
+    box(h,0,2.2,0,13,4.4,9,wall);
+    box(h,0,4.7,0,14,.3,10,roof);
+    box(h,0,1.1,4.55,1.5,2.2,.1,door);
 
-    for(const side of [-1,1]){
-      box(house,side*3,2.8,4.6,1.6,1.1,.1,windowMat);
+    for(const s of [-1,1]){
+      box(h,s*3,2.8,4.6,1.6,1.1,.1,win);
     }
   }
 
-  house.position.set(x,0,z);
-  scene.add(house);
+  h.position.set(x,0,z);
+  scene.add(h);
 }
 
 const housePositions=[
-  [-23,-85,"house1"],[24,-105,"house2"],
-  [-25,-45,"house1"],[25,-15,"house2"],
-  [-26,35,"house1"],[25,75,"house2"],
-  [-25,105,"house1"],[25,145,"house2"],
-  [-25,175,"house1"],[-42,-100,"house2"],
-  [43,-65,"house1"],[-45,55,"house2"],
+  [-23,-85,"house1"],
+  [24,-105,"house2"],
+  [-25,-45,"house1"],
+  [25,-15,"house2"],
+  [-26,35,"house1"],
+  [25,75,"house2"],
+  [-25,105,"house1"],
+  [25,145,"house2"],
+  [-25,175,"house1"],
+  [-42,-100,"house2"],
+  [43,-65,"house1"],
+  [-45,55,"house2"],
   [45,110,"house1"]
 ];
 
 function createHouses(){
-  for(const h of housePositions) makeHouse(h[2],h[0],h[1]);
+  for(const h of housePositions){
+    makeHouse(h[2],h[0],h[1]);
+  }
 }
 
 /* TREES */
 
-function makeTree(x,z,scale=1){
+function makeTree(x,z,s=1){
   const name=Math.random()>.5?"treeA":"treeB";
-  let tree=makeAsset(name,7*scale);
+  let t=makeAsset(name,7*s);
 
-  if(!tree){
-    tree=new THREE.Group();
+  if(!t){
+    t=new THREE.Group();
 
     const trunk=new THREE.Mesh(
-      new THREE.CylinderGeometry(.18*scale,.32*scale,3.8*scale,10),
+      new THREE.CylinderGeometry(.18*s,.32*s,3.8*s,10),
       M.tree
     );
-    trunk.position.y=1.9*scale;
-    tree.add(trunk);
+
+    trunk.position.y=1.9*s;
+    t.add(trunk);
 
     for(let i=0;i<13;i++){
       const crown=new THREE.Mesh(
-        new THREE.IcosahedronGeometry((.8+Math.random()*.6)*scale,1),
+        new THREE.IcosahedronGeometry(
+          (.8+Math.random()*.6)*s,1
+        ),
         i%2?M.leaf:M.leaf2
       );
 
       const a=i*2.399;
+
       crown.position.set(
-        Math.cos(a)*1.05*scale,
-        (3.2+Math.random()*2.1)*scale,
-        Math.sin(a)*1.05*scale
+        Math.cos(a)*1.05*s,
+        (3.2+Math.random()*2.1)*s,
+        Math.sin(a)*1.05*s
       );
 
       crown.scale.set(1.12,.9,1.05);
-      tree.add(crown);
+      t.add(crown);
     }
   }
 
-  tree.position.set(x,0,z);
-  tree.rotation.y=Math.random()*Math.PI*2;
-  scene.add(tree);
+  t.position.set(x,0,z);
+  t.rotation.y=Math.random()*Math.PI*2;
+  scene.add(t);
 }
 
 function createTrees(){
   for(let i=0;i<65;i++){
     const x=(Math.random()-.5)*180;
     const z=(Math.random()-.5)*230;
-    if(Math.abs(x)>10) makeTree(x,z,.8+Math.random()*.8);
+
+    if(Math.abs(x)>10){
+      makeTree(x,z,.8+Math.random()*.8);
+    }
   }
 }
-
-/* BANANA TREES */
 
 function bananaTree(x,z){
   const g=new THREE.Group();
 
-  const trunk=new THREE.Mesh(
-    new THREE.CylinderGeometry(.16,.2,2.6,12),M.tree
+  const tr=new THREE.Mesh(
+    new THREE.CylinderGeometry(.16,.2,2.6,12),
+    M.tree
   );
-  trunk.position.y=1.3;
-  g.add(trunk);
+
+  tr.position.y=1.3;
+  g.add(tr);
 
   for(let i=0;i<7;i++){
-    const leaf=new THREE.Mesh(
-      new THREE.ConeGeometry(.35,3.6,7),M.leaf
+    const l=new THREE.Mesh(
+      new THREE.ConeGeometry(.35,3.6,7),
+      M.leaf
     );
-    leaf.position.y=2.6;
-    leaf.rotation.z=Math.PI/2.4;
-    leaf.rotation.y=i*.9;
-    leaf.scale.set(.55,1,.25);
-    g.add(leaf);
+
+    l.position.y=2.6;
+    l.rotation.z=Math.PI/2.4;
+    l.rotation.y=i*.9;
+    l.scale.set(.55,1,.25);
+    g.add(l);
   }
 
   g.position.set(x,0,z);
@@ -470,91 +486,104 @@ function bananaTree(x,z){
 }
 
 for(let i=0;i<15;i++){
-  bananaTree(15+Math.random()*45,-90+Math.random()*180);
+  bananaTree(
+    15+Math.random()*45,
+    -90+Math.random()*180
+  );
 }
 
-/* PLAYER AND NPC — PART 2 CONTINUES */
+/* HUMAN CHARACTER WITH MOVING LIMBS */
 
-/* =========================================
-   PLAYER CHARACTER
-========================================= */
-
-function makeFallbackHuman(kind="casual") {
-  const group=new THREE.Group();
+function makeFallbackHuman(kind="casual"){
+  const g=new THREE.Group();
 
   const skin=mat(0xb77e5b);
-  const shirts={
-    farmer:0x527342,
-    casual:0x426b9a,
-    worker:0xb78a37
-  };
 
-  const shirt=mat(shirts[kind]||0x8b4b3e);
+  const shirt=mat(
+    ({
+      farmer:0x527342,
+      casual:0x426b9a,
+      worker:0xb78a37
+    })[kind]||0x8b4b3e
+  );
+
   const pants=mat(0x343b49);
   const shoes=mat(0x242321);
   const hair=mat(0x211b18);
 
-  function capsule(parent,radius,length,material,x,y,z){
-    const mesh=new THREE.Mesh(
-      new THREE.CapsuleGeometry(radius,length,4,8),
-      material
+  function capsule(parent,r,len,m,x,y,z){
+    const o=new THREE.Mesh(
+      new THREE.CapsuleGeometry(r,len,4,8),
+      m
     );
-    mesh.position.set(x,y,z);
-    mesh.castShadow=true;
-    parent.add(mesh);
-    return mesh;
+
+    o.position.set(x,y,z);
+    o.castShadow=true;
+    parent.add(o);
+
+    return o;
   }
 
-  // Legs
-  capsule(group,.105,.52,pants,-.15,.60,0);
-  capsule(group,.105,.52,pants,.15,.60,0);
+  const legs=[];
+  const arms=[];
 
-  // Shoes
+  // Legs with separate joints
   for(const side of [-1,1]){
+    const leg=new THREE.Group();
+    leg.position.set(side*.15,.91,0);
+    g.add(leg);
+
+    capsule(leg,.105,.52,pants,0,-.30,0);
+
     const foot=new THREE.Mesh(
       new THREE.SphereGeometry(.13,12,8),
       shoes
     );
+
     foot.scale.set(.9,.55,1.5);
-    foot.position.set(side*.15,.12,.1);
-    group.add(foot);
+    foot.position.set(0,-.79,.1);
+    leg.add(foot);
+
+    legs.push(leg);
   }
 
   // Body
-  capsule(group,.25,.5,shirt,0,1.34,0);
+  capsule(g,.25,.5,shirt,0,1.34,0);
 
-  // Neck
   const neck=new THREE.Mesh(
     new THREE.CylinderGeometry(.075,.085,.16,10),
     skin
   );
+
   neck.position.y=1.72;
-  group.add(neck);
+  g.add(neck);
 
   // Head
   const head=new THREE.Mesh(
     new THREE.SphereGeometry(.19,16,12),
     skin
   );
+
   head.position.y=1.96;
   head.castShadow=true;
-  group.add(head);
+  g.add(head);
 
   // Hair
-  const hairCap=new THREE.Mesh(
+  const cap=new THREE.Mesh(
     new THREE.SphereGeometry(
       .195,14,8,0,Math.PI*2,0,Math.PI*.48
     ),
     hair
   );
-  hairCap.position.y=2.015;
-  group.add(hairCap);
 
-  // Arms
+  cap.position.y=2.015;
+  g.add(cap);
+
+  // Arms with separate joints
   for(const side of [-1,1]){
     const arm=new THREE.Group();
     arm.position.set(side*.31,1.49,0);
-    group.add(arm);
+    g.add(arm);
 
     capsule(arm,.082,.42,shirt,0,-.25,0);
 
@@ -562,11 +591,32 @@ function makeFallbackHuman(kind="casual") {
       new THREE.SphereGeometry(.08,10,8),
       skin
     );
+
     hand.position.set(0,-.52,0);
     arm.add(hand);
+
+    arms.push(arm);
   }
 
-  return group;
+  g.userData.limbs={legs,arms};
+
+  return g;
+}
+
+/* RUNNING / WALKING ANIMATION */
+
+function animateHuman(root,phase,amount=1){
+  root.traverse(o=>{
+    if(!o.userData.limbs)return;
+
+    const swing=Math.sin(phase)*.62*amount;
+
+    o.userData.limbs.legs[0].rotation.x=swing;
+    o.userData.limbs.legs[1].rotation.x=-swing;
+
+    o.userData.limbs.arms[0].rotation.x=-swing*.72;
+    o.userData.limbs.arms[1].rotation.x=swing*.72;
+  });
 }
 
 function addCharacterModel(name,root,height){
@@ -575,12 +625,22 @@ function addCharacterModel(name,root,height){
   if(model){
     root.add(model);
   }else{
-    const fallback=makeFallbackHuman(name);
-    fallback.scale.setScalar(height/2.15);
-    root.add(fallback);
+    const f=makeFallbackHuman(name);
+    f.scale.setScalar(height/2.15);
+    root.add(f);
   }
 
   return true;
+}
+
+function makeDriver(kind="worker",scale=.78){
+  const g=makeFallbackHuman(kind);
+
+  g.scale.setScalar(scale);
+  g.position.y=-.48;
+  g.rotation.x=-.12;
+
+  return g;
 }
 
 /* PLAYER */
@@ -593,7 +653,6 @@ addCharacterModel("farmer",player,2.05);
 player.position.set(0,0,0);
 player.rotation.y=Math.PI;
 
-let playerSpeed=0;
 let jumpVelocity=0;
 let isJumping=false;
 
@@ -602,16 +661,15 @@ let isJumping=false;
 const villagers=[];
 
 function addVillager(name,x,z,height=1.9){
-  const npc=new THREE.Group();
+  const n=new THREE.Group();
 
-  addCharacterModel(name,npc,height);
+  addCharacterModel(name,n,height);
 
-  npc.position.set(x,0,z);
-  scene.add(npc);
+  n.position.set(x,0,z);
+  scene.add(n);
 
   villagers.push({
-    mesh:npc,
-    x,z,
+    mesh:n,
     phase:Math.random()*10
   });
 }
@@ -625,13 +683,11 @@ addVillager("farmer",-42,12);
 addVillager("worker",18,92);
 addVillager("casual",-18,-115);
 
-/* =========================================
-   VEHICLES
-========================================= */
+/* WHEELS */
 
-function makeWheel(parent,x,y,z,radius){
+function makeWheel(parent,x,y,z,r){
   const tire=new THREE.Mesh(
-    new THREE.CylinderGeometry(radius,radius,.24,24),
+    new THREE.CylinderGeometry(r,r,.24,24),
     M.black
   );
 
@@ -642,7 +698,7 @@ function makeWheel(parent,x,y,z,radius){
 
   const rim=new THREE.Mesh(
     new THREE.CylinderGeometry(
-      radius*.56,radius*.56,.255,20
+      r*.56,r*.56,.255,20
     ),
     M.metal
   );
@@ -653,7 +709,7 @@ function makeWheel(parent,x,y,z,radius){
 
   const hub=new THREE.Mesh(
     new THREE.CylinderGeometry(
-      radius*.18,radius*.18,.27,14
+      r*.18,r*.18,.27,14
     ),
     M.metal
   );
@@ -667,25 +723,25 @@ function makeWheel(parent,x,y,z,radius){
 
 const traffic=[];
 
-/* TRACTOR */
+/* TRACTOR WITH DRIVER */
 
 function makeTractor(x,z,direction=1){
-  const group=new THREE.Group();
+  const g=new THREE.Group();
   const wheels=[];
 
   const green=mat(0x28743b,.68);
-  const darkGreen=mat(0x174d2b,.8);
+  const dark=mat(0x174d2b,.8);
   const metal=mat(0x858d8a,.42,.45);
 
   const chassis=new THREE.Mesh(
     new THREE.CapsuleGeometry(.42,1.45,5,12),
-    darkGreen
+    dark
   );
 
   chassis.rotation.x=Math.PI/2;
   chassis.scale.set(1,.66,1);
   chassis.position.set(0,.82,.05);
-  group.add(chassis);
+  g.add(chassis);
 
   const bonnet=new THREE.Mesh(
     new THREE.CylinderGeometry(.47,.56,1.35,20),
@@ -694,37 +750,29 @@ function makeTractor(x,z,direction=1){
 
   bonnet.rotation.x=Math.PI/2;
   bonnet.position.set(0,1.15,.72);
-  bonnet.castShadow=true;
-  group.add(bonnet);
+  g.add(bonnet);
 
   const nose=new THREE.Mesh(
     new THREE.CylinderGeometry(.42,.47,.14,18),
-    darkGreen
+    dark
   );
 
   nose.rotation.x=Math.PI/2;
   nose.position.set(0,1.15,1.43);
-  group.add(nose);
+  g.add(nose);
 
-  // Front grille
   for(let i=-3;i<=3;i++){
-    const bar=new THREE.Mesh(
-      new THREE.CylinderGeometry(.018,.018,.62,6),
-      metal
-    );
-
-    bar.position.set(i*.085,1.15,1.51);
-    group.add(bar);
+    box(g,i*.085,1.15,1.51,.035,.62,.035,metal);
   }
 
-  for(const side of [-1,1]){
+  for(const s of [-1,1]){
     const lamp=new THREE.Mesh(
       new THREE.SphereGeometry(.105,12,8),
       mat(0xffe7a1)
     );
 
-    lamp.position.set(side*.36,1.37,1.45);
-    group.add(lamp);
+    lamp.position.set(s*.36,1.37,1.45);
+    g.add(lamp);
 
     const fender=new THREE.Mesh(
       new THREE.TorusGeometry(.62,.075,8,24,Math.PI),
@@ -732,12 +780,12 @@ function makeTractor(x,z,direction=1){
     );
 
     fender.rotation.z=Math.PI;
-    fender.position.set(side*.72,.58,-.68);
-    group.add(fender);
+    fender.position.set(s*.72,.58,-.68);
+    g.add(fender);
 
     wheels.push(
-      makeWheel(group,side*.77,.58,-.68,.57),
-      makeWheel(group,side*.69,.4,1,.38)
+      makeWheel(g,s*.77,.58,-.68,.57),
+      makeWheel(g,s*.69,.4,1,.38)
     );
   }
 
@@ -747,7 +795,7 @@ function makeTractor(x,z,direction=1){
   );
 
   seat.position.set(0,1.55,-.58);
-  group.add(seat);
+  g.add(seat);
 
   const steering=new THREE.Mesh(
     new THREE.TorusGeometry(.23,.025,8,18),
@@ -756,7 +804,12 @@ function makeTractor(x,z,direction=1){
 
   steering.position.set(0,1.48,.02);
   steering.rotation.x=.55;
-  group.add(steering);
+  g.add(steering);
+
+  // Visible tractor driver
+  const driver=makeDriver("farmer",.78);
+  driver.position.set(0,.92,-.72);
+  g.add(driver);
 
   const exhaust=new THREE.Mesh(
     new THREE.CylinderGeometry(.045,.055,.95,10),
@@ -764,30 +817,18 @@ function makeTractor(x,z,direction=1){
   );
 
   exhaust.position.set(-.34,1.86,.88);
-  group.add(exhaust);
+  g.add(exhaust);
 
   // Trailer
   const trailer=new THREE.Group();
 
-  const bed=new THREE.Mesh(
-    new THREE.BoxGeometry(1.9,.18,2.55),
-    M.red
-  );
+  box(trailer,0,.95,0,1.9,.18,2.55,M.red);
 
-  bed.position.y=.95;
-  trailer.add(bed);
-
-  for(const side of [-1,1]){
-    const rail=new THREE.Mesh(
-      new THREE.BoxGeometry(.1,.62,2.55),
-      M.red
-    );
-
-    rail.position.set(side*.9,1.28,0);
-    trailer.add(rail);
+  for(const s of [-1,1]){
+    box(trailer,s*.9,1.28,0,.1,.62,2.55,M.red);
 
     wheels.push(
-      makeWheel(trailer,side*1.0,.46,0,.34)
+      makeWheel(trailer,s*1,.46,0,.34)
     );
   }
 
@@ -798,6 +839,7 @@ function makeTractor(x,z,direction=1){
     );
 
     sack.scale.set(1,.8,1.5);
+
     sack.position.set(
       -.55+(i%3)*.55,
       1.16,
@@ -808,33 +850,32 @@ function makeTractor(x,z,direction=1){
   }
 
   trailer.position.z=-2.55;
-  group.add(trailer);
+  g.add(trailer);
 
-  group.position.set(x,0,z);
-  group.rotation.y=direction>0?0:Math.PI;
+  g.position.set(x,0,z);
+  g.rotation.y=direction>0?0:Math.PI;
 
-  scene.add(group);
+  scene.add(g);
 
   traffic.push({
-    mesh:group,
+    mesh:g,
     wheels,
     speed:direction*3.2
   });
 }
 
-/* MOTORCYCLE */
+/* MOTORBIKE WITH RIDER */
 
 function makeMotorcycle(x,z,direction=1){
-  const group=new THREE.Group();
+  const g=new THREE.Group();
   const wheels=[];
 
-  const frame=mat(0x343a3b,.5,.45);
   const red=mat(0xa52e25,.55);
   const chrome=mat(0x9ca5a5,.35,.7);
 
   wheels.push(
-    makeWheel(group,0,.43,.86,.39),
-    makeWheel(group,0,.43,-.86,.39)
+    makeWheel(g,0,.43,.86,.39),
+    makeWheel(g,0,.43,-.86,.39)
   );
 
   const tank=new THREE.Mesh(
@@ -844,7 +885,7 @@ function makeMotorcycle(x,z,direction=1){
 
   tank.scale.set(.72,.65,1.05);
   tank.position.set(0,1.02,.05);
-  group.add(tank);
+  g.add(tank);
 
   const seat=new THREE.Mesh(
     new THREE.CapsuleGeometry(.17,.58,4,10),
@@ -853,7 +894,7 @@ function makeMotorcycle(x,z,direction=1){
 
   seat.rotation.x=Math.PI/2;
   seat.position.set(0,1.13,-.55);
-  group.add(seat);
+  g.add(seat);
 
   const engine=new THREE.Mesh(
     new THREE.CylinderGeometry(.24,.24,.42,12),
@@ -862,17 +903,17 @@ function makeMotorcycle(x,z,direction=1){
 
   engine.rotation.z=Math.PI/2;
   engine.position.set(0,.72,-.12);
-  group.add(engine);
+  g.add(engine);
 
-  for(const side of [-1,1]){
+  for(const s of [-1,1]){
     const fork=new THREE.Mesh(
       new THREE.CylinderGeometry(.035,.045,.83,8),
       chrome
     );
 
-    fork.position.set(side*.09,.87,.65);
+    fork.position.set(s*.09,.87,.65);
     fork.rotation.x=-.18;
-    group.add(fork);
+    g.add(fork);
   }
 
   const handle=new THREE.Mesh(
@@ -882,7 +923,7 @@ function makeMotorcycle(x,z,direction=1){
 
   handle.rotation.z=Math.PI/2;
   handle.position.set(0,1.35,.68);
-  group.add(handle);
+  g.add(handle);
 
   const lamp=new THREE.Mesh(
     new THREE.SphereGeometry(.15,12,10),
@@ -890,7 +931,7 @@ function makeMotorcycle(x,z,direction=1){
   );
 
   lamp.position.set(0,1.25,.89);
-  group.add(lamp);
+  g.add(lamp);
 
   const exhaust=new THREE.Mesh(
     new THREE.CylinderGeometry(.055,.07,.85,10),
@@ -899,24 +940,30 @@ function makeMotorcycle(x,z,direction=1){
 
   exhaust.rotation.x=Math.PI/2;
   exhaust.position.set(.22,.64,-.18);
-  group.add(exhaust);
+  g.add(exhaust);
 
-  group.position.set(x,0,z);
-  group.rotation.y=direction>0?0:Math.PI;
+  // Visible motorcycle rider
+  const rider=makeDriver("casual",.72);
+  rider.position.set(0,.88,-.48);
+  rider.rotation.x=-.08;
+  g.add(rider);
 
-  scene.add(group);
+  g.position.set(x,0,z);
+  g.rotation.y=direction>0?0:Math.PI;
+
+  scene.add(g);
 
   traffic.push({
-    mesh:group,
+    mesh:g,
     wheels,
     speed:direction*5.8
   });
 }
 
-/* CAR */
+/* CAR WITH DRIVER */
 
 function makeCar(x,z,direction=1){
-  const group=new THREE.Group();
+  const g=new THREE.Group();
   const wheels=[];
 
   const bodyMat=mat(0x315d86,.48,.18);
@@ -926,7 +973,7 @@ function makeCar(x,z,direction=1){
     roughness:.18,
     metalness:.25,
     transparent:true,
-    opacity:.72
+    opacity:.58
   });
 
   const body=new THREE.Mesh(
@@ -937,8 +984,7 @@ function makeCar(x,z,direction=1){
   body.rotation.x=Math.PI/2;
   body.scale.set(1,.72,1);
   body.position.y=.82;
-  body.castShadow=true;
-  group.add(body);
+  g.add(body);
 
   const cabin=new THREE.Mesh(
     new THREE.CapsuleGeometry(.44,.8,5,14),
@@ -948,38 +994,54 @@ function makeCar(x,z,direction=1){
   cabin.rotation.x=Math.PI/2;
   cabin.scale.set(.94,.75,.9);
   cabin.position.set(0,1.38,-.13);
-  group.add(cabin);
+  g.add(cabin);
 
-  for(const side of [-1,1]){
+  for(const s of [-1,1]){
     wheels.push(
-      makeWheel(group,side*.58,.47,.78,.31),
-      makeWheel(group,side*.58,.47,-.78,.31)
+      makeWheel(g,s*.58,.47,.78,.31),
+      makeWheel(g,s*.58,.47,-.78,.31)
     );
 
-    const headlamp=new THREE.Mesh(
+    const hl=new THREE.Mesh(
       new THREE.SphereGeometry(.1,10,8),
       mat(0xffedbd)
     );
 
-    headlamp.position.set(side*.39,.82,1.52);
-    group.add(headlamp);
+    hl.position.set(s*.39,.82,1.52);
+    g.add(hl);
 
-    const tailLamp=new THREE.Mesh(
+    const tl=new THREE.Mesh(
       new THREE.SphereGeometry(.09,10,8),
       mat(0xb52b21)
     );
 
-    tailLamp.position.set(side*.39,.82,-1.5);
-    group.add(tailLamp);
+    tl.position.set(s*.39,.82,-1.5);
+    g.add(tl);
   }
 
-  group.position.set(x,0,z);
-  group.rotation.y=direction>0?0:Math.PI;
+  box(g,-.23,1.05,-.25,.42,.12,.48,M.black);
 
-  scene.add(group);
+  // Visible car driver
+  const driver=makeDriver("worker",.68);
+  driver.position.set(-.23,.54,-.28);
+  g.add(driver);
+
+  const steering=new THREE.Mesh(
+    new THREE.TorusGeometry(.17,.018,8,16),
+    M.black
+  );
+
+  steering.position.set(-.23,1.25,.35);
+  steering.rotation.x=.5;
+  g.add(steering);
+
+  g.position.set(x,0,z);
+  g.rotation.y=direction>0?0:Math.PI;
+
+  scene.add(g);
 
   traffic.push({
-    mesh:group,
+    mesh:g,
     wheels,
     speed:direction*7.5
   });
@@ -992,9 +1054,7 @@ makeCar(2.5,-105,-1);
 makeMotorcycle(2.5,145,-1);
 makeMotorcycle(-2.5,-65,1);
 
-/* =========================================
-   BIRDS
-========================================= */
+/* BIRDS */
 
 const birds=[];
 
@@ -1003,7 +1063,6 @@ for(let i=0;i<9;i++){
 
   const feather=mat(0x353a3a);
   const belly=mat(0x77766d);
-  const beakMat=mat(0xc58c35);
 
   const body=new THREE.Mesh(
     new THREE.SphereGeometry(.22,12,9),
@@ -1023,7 +1082,7 @@ for(let i=0;i<9;i++){
 
   const beak=new THREE.Mesh(
     new THREE.ConeGeometry(.055,.22,7),
-    beakMat
+    mat(0xc58c35)
   );
 
   beak.rotation.x=-Math.PI/2;
@@ -1041,21 +1100,21 @@ for(let i=0;i<9;i++){
 
   const wings=[];
 
-  for(const side of [-1,1]){
-    const pivot=new THREE.Group();
-    pivot.position.set(side*.12,.05,.02);
-    bird.add(pivot);
+  for(const s of [-1,1]){
+    const p=new THREE.Group();
+    p.position.set(s*.12,.05,.02);
+    bird.add(p);
 
-    const wing=new THREE.Mesh(
+    const w=new THREE.Mesh(
       new THREE.SphereGeometry(.32,10,8),
       feather
     );
 
-    wing.scale.set(1.65,.12,.55);
-    wing.position.x=side*.3;
-    pivot.add(wing);
+    w.scale.set(1.65,.12,.55);
+    w.position.x=s*.3;
+    p.add(w);
 
-    wings.push({pivot,side});
+    wings.push({pivot:p,side:s});
   }
 
   bird.position.set(
@@ -1074,18 +1133,12 @@ for(let i=0;i<9;i++){
   });
 }
 
-/* =========================================
-   MOBILE CONTROLS
-========================================= */
+/* MOBILE CONTROLS */
 
 const controls=document.createElement("div");
 
-controls.style.cssText=`
-position:fixed;
-inset:0;
-z-index:20;
-pointer-events:none;
-`;
+controls.style.cssText=
+  "position:fixed;inset:0;z-index:20;pointer-events:none";
 
 document.body.appendChild(controls);
 
@@ -1095,54 +1148,35 @@ const joystick=document.createElement("div");
 
 joystick.id="joystick";
 
-joystick.style.cssText=`
-position:absolute;
-left:25px;
-bottom:35px;
-width:125px;
-height:125px;
-border-radius:50%;
-background:rgba(20,25,25,.32);
-border:2px solid rgba(255,255,255,.55);
-pointer-events:auto;
-touch-action:none;
-`;
+joystick.style.cssText=
+  "position:absolute;left:25px;bottom:35px;width:125px;height:125px;border-radius:50%;background:rgba(20,25,25,.32);border:2px solid rgba(255,255,255,.55);pointer-events:auto;touch-action:none";
 
 const stick=document.createElement("div");
 
-stick.style.cssText=`
-position:absolute;
-width:52px;
-height:52px;
-left:35px;
-top:35px;
-border-radius:50%;
-background:rgba(255,255,255,.7);
-border:2px solid #ffffff;
-`;
+stick.style.cssText=
+  "position:absolute;width:52px;height:52px;left:35px;top:35px;border-radius:50%;background:rgba(255,255,255,.7);border:2px solid white";
 
 joystick.appendChild(stick);
 controls.appendChild(joystick);
 
 let moveX=0;
 let moveY=0;
-let joyTouch=null;
+let joyPointer=null;
 
 function updateJoystick(e){
-  const rect=joystick.getBoundingClientRect();
-
-  const cx=rect.left+rect.width/2;
-  const cy=rect.top+rect.height/2;
+  const r=joystick.getBoundingClientRect();
+  const cx=r.left+r.width/2;
+  const cy=r.top+r.height/2;
 
   let dx=e.clientX-cx;
   let dy=e.clientY-cy;
 
   const max=43;
-  const distance=Math.sqrt(dx*dx+dy*dy);
+  const d=Math.hypot(dx,dy);
 
-  if(distance>max){
-    dx=dx/distance*max;
-    dy=dy/distance*max;
+  if(d>max){
+    dx=dx/d*max;
+    dy=dy/d*max;
   }
 
   stick.style.left=(35+dx)+"px";
@@ -1153,50 +1187,40 @@ function updateJoystick(e){
 }
 
 joystick.addEventListener("pointerdown",e=>{
-  joyTouch=e.pointerId;
+  joyPointer=e.pointerId;
   joystick.setPointerCapture(e.pointerId);
   updateJoystick(e);
 });
 
 joystick.addEventListener("pointermove",e=>{
-  if(e.pointerId===joyTouch) updateJoystick(e);
+  if(e.pointerId===joyPointer){
+    updateJoystick(e);
+  }
 });
 
-function releaseJoystick(e){
-  if(e.pointerId!==joyTouch)return;
+function releaseJoy(e){
+  if(e.pointerId!==joyPointer)return;
 
-  joyTouch=null;
+  joyPointer=null;
   moveX=0;
   moveY=0;
+
   stick.style.left="35px";
   stick.style.top="35px";
 }
 
-joystick.addEventListener("pointerup",releaseJoystick);
-joystick.addEventListener("pointercancel",releaseJoystick);
+joystick.addEventListener("pointerup",releaseJoy);
+joystick.addEventListener("pointercancel",releaseJoy);
 
-/* JUMP BUTTON */
+/* JUMP */
 
 const jumpButton=document.createElement("button");
 
 jumpButton.id="jump";
 jumpButton.textContent="JUMP";
 
-jumpButton.style.cssText=`
-position:absolute;
-right:28px;
-bottom:48px;
-width:75px;
-height:75px;
-border-radius:50%;
-border:2px solid white;
-background:rgba(220,170,60,.75);
-color:white;
-font-weight:bold;
-font-size:15px;
-pointer-events:auto;
-touch-action:none;
-`;
+jumpButton.style.cssText=
+  "position:absolute;right:28px;bottom:48px;width:75px;height:75px;border-radius:50%;border:2px solid white;background:rgba(220,170,60,.75);color:white;font-weight:bold;font-size:15px;pointer-events:auto;touch-action:none";
 
 controls.appendChild(jumpButton);
 
@@ -1225,37 +1249,34 @@ let lastTouchY=0;
 window.addEventListener("touchstart",e=>{
   if(lookTouchId!==null)return;
 
-  const touch=Array.from(e.changedTouches).find(t=>{
-    const element=document.elementFromPoint(
-      t.clientX,t.clientY
-    );
+  const t=Array.from(e.changedTouches).find(t=>{
+    const el=document.elementFromPoint(t.clientX,t.clientY);
 
-    return element &&
-      !element.closest("#joystick,#jump");
+    return el&&!el.closest("#joystick,#jump");
   });
 
-  if(!touch)return;
+  if(!t)return;
 
-  lookTouchId=touch.identifier;
-  lastTouchX=touch.clientX;
-  lastTouchY=touch.clientY;
+  lookTouchId=t.identifier;
+  lastTouchX=t.clientX;
+  lastTouchY=t.clientY;
 
 },{capture:true,passive:false});
 
 window.addEventListener("touchmove",e=>{
   if(lookTouchId===null)return;
 
-  const touch=Array.from(e.touches).find(
+  const t=Array.from(e.touches).find(
     t=>t.identifier===lookTouchId
   );
 
-  if(!touch)return;
+  if(!t)return;
 
-  const dx=touch.clientX-lastTouchX;
-  const dy=touch.clientY-lastTouchY;
+  const dx=t.clientX-lastTouchX;
+  const dy=t.clientY-lastTouchY;
 
-  lastTouchX=touch.clientX;
-  lastTouchY=touch.clientY;
+  lastTouchX=t.clientX;
+  lastTouchY=t.clientY;
 
   cameraYaw-=dx*.006;
 
@@ -1269,54 +1290,61 @@ window.addEventListener("touchmove",e=>{
 
 },{capture:true,passive:false});
 
-window.addEventListener("touchend",e=>{
+function endLook(e){
   if(Array.from(e.changedTouches).some(
     t=>t.identifier===lookTouchId
   )){
     lookTouchId=null;
   }
-});
+}
 
-/* =========================================
-   GAME ANIMATION
-========================================= */
+window.addEventListener("touchend",endLook);
+window.addEventListener("touchcancel",endLook);
+
+/* GAME LOOP */
 
 const clock=new THREE.Clock();
-
 let elapsed=0;
 
 function animate(){
   requestAnimationFrame(animate);
 
-  const delta=Math.min(clock.getDelta(),.04);
-  elapsed+=delta;
+  const dt=Math.min(clock.getDelta(),.04);
+  elapsed+=dt;
 
-  /* PLAYER MOVEMENT */
-
+  // Joystick up = forward, down = backward.
   const forward=-moveY;
   const side=moveX;
 
-  const moving=Math.abs(forward)+Math.abs(side)>.08;
+  const moving=Math.hypot(forward,side)>.08;
 
   if(moving){
-    const angle=Math.atan2(side,forward);
-    const direction=angle+cameraYaw;
+    const dx=
+      side*Math.cos(cameraYaw)-
+      forward*Math.sin(cameraYaw);
 
-    player.position.x+=Math.sin(direction)*delta*5;
-    player.position.z+=Math.cos(direction)*delta*5;
+    const dz=
+      -side*Math.sin(cameraYaw)-
+      forward*Math.cos(cameraYaw);
 
-    player.rotation.y=direction+Math.PI;
+    const len=Math.hypot(dx,dz)||1;
 
-    playerSpeed=5;
+    player.position.x+=(dx/len)*5*dt;
+    player.position.z+=(dz/len)*5*dt;
+
+    player.rotation.y=Math.atan2(dx/len,dz/len);
+
+    // Running animation
+    animateHuman(player,elapsed*12,1);
   }else{
-    playerSpeed=0;
+    // Stop running when joystick is released
+    animateHuman(player,0,0);
   }
 
-  /* JUMP PHYSICS */
-
+  // Jump physics
   if(isJumping){
-    player.position.y+=jumpVelocity*delta;
-    jumpVelocity-=18*delta;
+    player.position.y+=jumpVelocity*dt;
+    jumpVelocity-=18*dt;
 
     if(player.position.y<=0){
       player.position.y=0;
@@ -1325,71 +1353,67 @@ function animate(){
     }
   }
 
-  /* VILLAGER IDLE MOVEMENT */
+  // Villager walking animation
+  for(const n of villagers){
+    n.mesh.position.y=
+      Math.sin(elapsed*2+n.phase)*.025;
 
-  for(const npc of villagers){
-    npc.mesh.position.y=
-      Math.sin(elapsed*2+npc.phase)*.025;
+    animateHuman(
+      n.mesh,
+      elapsed*3+n.phase,
+      .45
+    );
   }
 
-  /* VEHICLE MOVEMENT */
+  // Vehicle movement
+  for(const v of traffic){
+    v.mesh.position.z+=v.speed*dt;
 
-  for(const vehicle of traffic){
-    vehicle.mesh.position.z+=vehicle.speed*delta;
-
-    if(vehicle.mesh.position.z>220){
-      vehicle.mesh.position.z=-220;
+    if(v.mesh.position.z>220){
+      v.mesh.position.z=-220;
     }
 
-    if(vehicle.mesh.position.z<-220){
-      vehicle.mesh.position.z=220;
+    if(v.mesh.position.z< -220){
+      v.mesh.position.z=220;
     }
 
-    for(const wheel of vehicle.wheels){
-      wheel.rotation.x+=vehicle.speed*delta*1.8;
+    for(const w of v.wheels){
+      w.rotation.x+=v.speed*dt*1.8;
     }
   }
 
-  /* BIRD FLIGHT */
+  // Flying birds
+  for(const b of birds){
+    b.mesh.position.x+=b.speed*dt;
 
-  for(const bird of birds){
-    bird.mesh.position.x+=bird.speed*delta;
+    b.mesh.position.y+=
+      Math.sin(elapsed*2+b.phase)*dt*.25;
 
-    bird.mesh.position.y+=
-      Math.sin(elapsed*2+bird.phase)*delta*.25;
+    b.mesh.position.z+=
+      Math.cos(elapsed+b.phase)*dt*.35;
 
-    bird.mesh.position.z+=
-      Math.cos(elapsed+bird.phase)*delta*.35;
-
-    if(bird.mesh.position.x>100){
-      bird.mesh.position.x=-100;
+    if(b.mesh.position.x>100){
+      b.mesh.position.x=-100;
     }
 
-    bird.wings.forEach(({pivot,side})=>{
-      pivot.rotation.z=
-        side*Math.sin(elapsed*9+bird.phase)*.72;
-    });
+    for(const w of b.wings){
+      w.pivot.rotation.z=
+        w.side*Math.sin(elapsed*9+b.phase)*.72;
+    }
   }
 
-  /* CAMERA */
+  // Camera follows player
+  const h=cameraDistance*Math.cos(cameraPitch);
 
-  const horizontalDistance=
-    cameraDistance*Math.cos(cameraPitch);
-
-  const desiredCamera=new THREE.Vector3(
-    player.position.x+
-      Math.sin(cameraYaw)*horizontalDistance,
-
-    player.position.y+
-      cameraDistance*Math.sin(cameraPitch),
-
-    player.position.z+
-      Math.cos(cameraYaw)*horizontalDistance
+  const target=new THREE.Vector3(
+    player.position.x+Math.sin(cameraYaw)*h,
+    player.position.y+cameraDistance*Math.sin(cameraPitch),
+    player.position.z+Math.cos(cameraYaw)*h
   );
 
   camera.position.lerp(
-    desiredCamera,
-    1-Math.exp(-7*delta)
+    target,
+    1-Math.exp(-7*dt)
   );
 
   camera.lookAt(
@@ -1401,56 +1425,34 @@ function animate(){
   renderer.render(scene,camera);
 }
 
-/* =========================================
-   START GAME
-========================================= */
+/* START GAME */
 
 async function startGame(){
-  status("Preparing Nayabasti village",5);
-
-  await prepareAssets();
-
-  status("Building houses and trees",85);
+  status("Building Nayabasti...",15);
 
   createHouses();
   createTrees();
 
-  player.position.set(0,0,0);
+  status("Loading optional 3D models...",30);
 
-  status("Starting game",100);
+  // Optional assets load in the background.
+  prepareAssets().catch(e=>{
+    console.warn("Optional model loading:",e);
+  });
 
+  // Start immediately using local 3D characters and objects.
   setTimeout(()=>{
-    loading.remove();
-  },600);
+    if(loading.isConnected){
+      loading.remove();
+    }
+  },800);
 
   animate();
 }
 
-startGame().catch(error=>{
-  console.error("Game start error:",error);
-
-  try{
-    if(!player.children.length){
-      addCharacterModel("farmer",player,2.05);
-    }
-
-    player.position.set(0,0,0);
-
-    if(!villagers.length){
-      addVillager("casual",8,15);
-      addVillager("worker",-12,30);
-    }
-
-    loading.textContent="Starting Nayabasti...";
-
-    setTimeout(()=>loading.remove(),700);
-
-    animate();
-
-  }catch(fallbackError){
-    console.error(fallbackError);
-    loading.textContent="Unable to start game. Please reload.";
-  }
+startGame().catch(e=>{
+  console.error(e);
+  loading.textContent="Game error — reload the page";
 });
 
 /* RESIZE */
@@ -1460,5 +1462,7 @@ window.addEventListener("resize",()=>{
   camera.updateProjectionMatrix();
 
   renderer.setSize(innerWidth,innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.25));
+  renderer.setPixelRatio(
+    Math.min(devicePixelRatio||1,1.25)
+  );
 });
