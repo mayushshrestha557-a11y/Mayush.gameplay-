@@ -31,7 +31,7 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
-              - name: Lock iOS to Landscape
+      - name: Lock iOS to Landscape
         run: |
           python3 - <<'PY'
           import plistlib
