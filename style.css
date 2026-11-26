@@ -1,30 +1,215 @@
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html,
-body {
+html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  position: fixed;
-  background: #000;
+  background: #87ceeb;
+  font-family: Arial, sans-serif;
   touch-action: none;
 }
 
 canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  touch-action: none;
-}
-
-#game {
   position: fixed;
   inset: 0;
   width: 100%;
-  height: 100dvh;
-  overflow: hidden;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #101820;
+  color: white;
+}
+
+#loading p {
+  margin-top: 12px;
+  color: #ccc;
+}
+
+#mayush-controls {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#joystick {
+  position: absolute;
+  left: 22px;
+  bottom: 28px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #ffffff25;
+  border: 2px solid #ffffff88;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#joystick-knob {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  left: 34px;
+  top: 34px;
+  border-radius: 50%;
+  background: #ffffffdd;
+  pointer-events: none;
+}
+
+#jump-button {
+  position: absolute;
+  right: 25px;
+  bottom: 45px;
+  width: 82px;
+  height: 82px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #e58b20;
+  color: white;
+  font-weight: bold;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#mayush-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow-y: auto;
+  background: linear-gradient(#192c35, #263c2b, #080e0c);
+  color: white;
+  text-align: center;
+}
+
+.cinema-scene {
+  min-height: 100%;
+  padding: 25px 18px 35px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cinema-top {
+  color: #d9bc82;
+  font-size: 11px;
+  letter-spacing: 4px;
+}
+
+.village-title h1 {
+  margin-top: 24px;
+  font-size: 40px;
+  letter-spacing: 7px;
+}
+
+.village-title p {
+  margin: 12px 0 25px;
+  color: #ddd0b6;
+}
+
+.elder-scene, .tea-scene {
+  width: 100%;
+  max-width: 430px;
+  padding: 17px;
+  margin: 10px 0;
+  border: 1px solid #bda16b77;
+  border-radius: 14px;
+  background: #ffffff16;
+}
+
+.elder-scene {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.elder-face {
+  font-size: 52px;
+}
+
+.elder-dialogue span {
+  color: #dfbc7a;
+  font-size: 12px;
+}
+
+#story-text {
+  margin-top: 7px;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.tea-scene {
+  background: #513b2c;
+}
+
+.tea-scene span {
+  font-size: 32px;
+  margin: 0 8px;
+}
+
+.tea-scene p {
+  margin-top: 10px;
+  color: #ffe0a8;
+}
+
+.tea-scene small {
+  color: #ddd0c1;
+}
+
+.mayush-scene {
+  margin-top: 15px;
+}
+
+.mayush-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  margin: auto;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #416b9a, #172b45);
+  border: 3px solid #d5b875;
+  font-size: 55px;
+}
+
+.mayush-scene h2 {
+  margin-top: 10px;
+  letter-spacing: 5px;
+}
+
+.mayush-scene p {
+  margin-top: 8px;
+  color: #d8c9ad;
+  font-size: 12px;
+}
+
+#start-adventure, #sound-button {
+  margin-top: 18px;
+  padding: 14px 28px;
+  border: 1px solid #d5b875;
+  border-radius: 30px;
+  background: #a77c3d;
+  color: white;
+  font-weight: bold;
+}
+
+#sound-button {
+  margin-top: 10px;
+  background: #283b35;
 }
