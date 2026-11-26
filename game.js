@@ -259,3 +259,221 @@ animate();
 startStory(() => {
   console.log("MAYUSH ADVENTURE STARTED");
 });
+
+
+/* =================================
+   NAYABASTI 3D WORLD
+================================= */
+
+// OBJECT HELPER
+function makeBox(w, h, d, color, x, y, z) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({ color })
+  );
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  return mesh;
+}
+
+// TREE
+function makeTree(x, z, scale = 1) {
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      0.25 * scale, 0.4 * scale,
+      3 * scale, 10
+    ),
+    new THREE.MeshStandardMaterial({ color: 0x704323 })
+  );
+
+  trunk.position.set(x, 1.5 * scale, z);
+  trunk.castShadow = true;
+  scene.add(trunk);
+
+  const leaves = new THREE.Mesh(
+    new THREE.SphereGeometry(1.8 * scale, 12, 10),
+    new THREE.MeshStandardMaterial({ color: 0x267d32 })
+  );
+
+  leaves.position.set(x, 3.8 * scale, z);
+  leaves.castShadow = true;
+  scene.add(leaves);
+}
+
+// NEPALI VILLAGE HOUSE
+function makeHouse(x, z, wallColor) {
+  // Walls
+  makeBox(5, 3, 4.5, wallColor, x, 1.5, z);
+
+  // Roof
+  const roof1 = makeBox(
+    3, 0.25, 5.1, 0x8b3026,
+    x - 1.05, 3.45, z
+  );
+  roof1.rotation.z = -0.55;
+
+  const roof2 = makeBox(
+    3, 0.25, 5.1, 0x8b3026,
+    x + 1.05, 3.45, z
+  );
+  roof2.rotation.z = 0.55;
+
+  // Door
+  makeBox(0.9, 2, 0.12, 0x58331e,
+    x, 1, z - 2.31);
+
+  // Windows
+  makeBox(0.85, 0.8, 0.13, 0x8bd5e8,
+    x - 1.5, 2, z - 2.32);
+
+  makeBox(0.85, 0.8, 0.13, 0x8bd5e8,
+    x + 1.5, 2, z - 2.32);
+}
+
+// VILLAGE HOUSES
+makeHouse(-13, -8, 0xe5c69a);
+makeHouse(13, -12, 0xd9b58b);
+makeHouse(-15, -35, 0xd4d0b4);
+makeHouse(14, -43, 0xe0c49b);
+makeHouse(-13, 28, 0xe7d3a8);
+makeHouse(13, 32, 0xcbb18b);
+
+// TREES AROUND VILLAGE
+for (let i = 0; i < 35; i++) {
+  const x = (Math.random() - 0.5) * 65;
+  const z = (Math.random() - 0.5) * 150;
+
+  if (Math.abs(x) > 6) {
+    makeTree(x, z, 0.7 + Math.random() * 0.5);
+  }
+}
+
+// SIDE ROAD
+const sideRoad = new THREE.Mesh(
+  new THREE.PlaneGeometry(60, 8),
+  new THREE.MeshStandardMaterial({ color: 0x77736b })
+);
+sideRoad.rotation.x = -Math.PI / 2;
+sideRoad.position.set(0, 0.04, -18);
+scene.add(sideRoad);
+
+// ZEBRA CROSSING
+for (let i = 0; i < 7; i++) {
+  const stripe = new THREE.Mesh(
+    new THREE.PlaneGeometry(7, 0.45),
+    new THREE.MeshStandardMaterial({ color: 0xffffff })
+  );
+
+  stripe.rotation.x = -Math.PI / 2;
+  stripe.position.set(0, 0.07, -21 + i * 0.9);
+  scene.add(stripe);
+}
+
+// TRAFFIC LIGHT
+function makeTrafficLight(x, z) {
+  makeBox(0.18, 5, 0.18, 0x333333, x, 2.5, z);
+  makeBox(0.9, 2.2, 0.6, 0x202020, x, 5.5, z);
+
+  const colors = [0xff0000, 0xffcc00, 0x00dd44];
+
+  colors.forEach((color, i) => {
+    const light = new THREE.Mesh(
+      new THREE.SphereGeometry(0.25, 16, 12),
+      new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.5
+      })
+    );
+
+    light.position.set(x, 6.2 - i * 0.65, z - 0.32);
+    scene.add(light);
+  });
+}
+
+makeTrafficLight(-5.5, -18);
+makeTrafficLight(5.5, -18);
+
+// CHAUTARI
+function makeChautari(x, z) {
+  const platform = new THREE.Mesh(
+    new THREE.CylinderGeometry(3, 3, 0.5, 12),
+    new THREE.MeshStandardMaterial({ color: 0xb5a18a })
+  );
+  platform.position.set(x, 0.25, z);
+  platform.receiveShadow = true;
+  scene.add(platform);
+
+  makeTree(x, z, 1.8);
+
+  // Stone seating
+  for (let i = 0; i < 6; i++) {
+    const angle = i * Math.PI / 3;
+    makeBox(
+      1.5, 0.45, 0.7, 0x888078,
+      x + Math.cos(angle) * 2.2,
+      0.65,
+      z + Math.sin(angle) * 2.2
+    );
+  }
+}
+
+makeChautari(-20, -22);
+
+// SCHOOL
+function makeSchool(x, z) {
+  makeBox(13, 5, 9, 0xe9d8b7, x, 2.5, z);
+
+  // School roof
+  makeBox(14, 0.5, 10, 0x9b3028, x, 5.2, z);
+
+  // Entrance
+  makeBox(1.5, 2.7, 0.2, 0x57351f,
+    x, 1.35, z - 4.6);
+
+  // Windows
+  for (let i = -2; i <= 2; i++) {
+    makeBox(
+      1.3, 1.3, 0.15, 0x79c8e6,
+      x + i * 2.3, 3, z - 4.65
+    );
+  }
+
+  // School sign
+  makeBox(5, 0.8, 0.2, 0x24613b,
+    x, 5.9, z - 4.8);
+}
+
+makeSchool(24, -35);
+
+// PLAYGROUND
+function makePlayground(x, z) {
+  // Green playground
+  const field = new THREE.Mesh(
+    new THREE.PlaneGeometry(24, 20),
+    new THREE.MeshStandardMaterial({ color: 0x65a947 })
+  );
+  field.rotation.x = -Math.PI / 2;
+  field.position.set(x, 0.05, z);
+  scene.add(field);
+
+  // Goal posts
+  makeBox(0.2, 2.5, 0.2, 0xffffff, x - 9, 1.25, z);
+  makeBox(0.2, 2.5, 0.2, 0xffffff, x + 9, 1.25, z);
+  makeBox(18, 0.2, 0.2, 0xffffff, x, 2.5, z);
+
+  // Swing
+  makeBox(0.15, 3.5, 0.15, 0x333333, x + 12, 1.75, z);
+  makeBox(0.15, 3.5, 0.15, 0x333333, x + 15, 1.75, z);
+  makeBox(3.2, 0.15, 0.15, 0x333333, x + 13.5, 3.5, z);
+
+  makeBox(2, 0.15, 0.5, 0xe7b52c,
+    x + 13.5, 1.1, z);
+}
+
+makePlayground(27, -10);
+
+console.log("NAYABASTI 3D WORLD LOADED");
+
