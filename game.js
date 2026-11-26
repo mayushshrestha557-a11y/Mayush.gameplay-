@@ -1,29 +1,28 @@
+
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
-/* ==========================================
-   MAYUSH GAMEPLAY — NAYABASTI
-   REAL GLB ASSETS — NO CARTOON FALLBACK
-========================================== */
+/* =====================================================
+   HAMRO BASTI
+   Founder & Creator: Mayush Shrestha
+   Real 3D Nepali Village Game
+===================================================== */
 
 document.documentElement.style.cssText =
   "margin:0;width:100%;height:100%;overflow:hidden";
 
 document.body.style.cssText =
-  "margin:0;width:100%;height:100%;overflow:hidden;background:#9ba9a8;touch-action:none;user-select:none";
+  "margin:0;width:100%;height:100%;overflow:hidden;background:#101b19;touch-action:none;user-select:none";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9ba9a8);
-scene.fog = new THREE.Fog(0x9ba9a8, 100, 390);
+scene.fog = new THREE.Fog(0x9ba9a8, 120, 430);
 
 const camera = new THREE.PerspectiveCamera(
-  65,
-  innerWidth / innerHeight,
-  0.1,
-  700
+  65, innerWidth / innerHeight, 0.1, 800
 );
 
 const renderer = new THREE.WebGLRenderer({
@@ -32,114 +31,53 @@ const renderer = new THREE.WebGLRenderer({
 });
 
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.25));
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.12;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
 renderer.domElement.style.cssText =
   "position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none";
-
 document.body.appendChild(renderer.domElement);
 
-/* ==========================================
-   LOADING SCREEN
-========================================== */
-
-const loading = document.createElement("div");
-
-loading.style.cssText = `
-position:fixed;
-inset:0;
-z-index:1000;
-background:#142019;
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
-flex-direction:column;
-font:14px Arial;
-gap:14px;
-padding:25px;
-text-align:center;
-`;
-
-loading.innerHTML = `
-<div style="font-size:30px;font-weight:900;letter-spacing:4px">MAYUSH</div>
-<div id="loadtext">LOADING REAL 3D ASSETS...</div>
-<div style="width:230px;height:7px;background:#4b554e;border-radius:8px;overflow:hidden">
-  <div id="loadbar" style="width:2%;height:7px;background:#d8b46d"></div>
-</div>
-<div id="loaderror" style="max-width:310px;line-height:1.5;color:#ffb6a7"></div>
-<button id="retry" style="
-display:none;padding:12px 28px;border:0;border-radius:8px;
-background:#d8b46d;color:#171717;font-weight:bold">
-RETRY DOWNLOAD
-</button>
-`;
-
-document.body.appendChild(loading);
-
-const loadText = document.getElementById("loadtext");
-const loadBar = document.getElementById("loadbar");
-const loadError = document.getElementById("loaderror");
-const retryButton = document.getElementById("retry");
-
-function status(message, progress) {
-  loadText.textContent = message;
-  loadBar.style.width = `${progress}%`;
-}
-
-function showAssetError(error) {
-  loadText.textContent = "REAL 3D ASSET LOAD FAILED";
-  loadError.textContent = String(error?.message || error);
-  loadBar.style.width = "0%";
-  retryButton.style.display = "block";
-}
+/* =====================================================
+   GAME STATE
+===================================================== */
 
 let gameStarted = false;
+let loadingPromise = null;
+let elapsed = 0;
 
-/* ==========================================
-   LIGHTING
-========================================== */
+let joystickSensitivity = 1;
+let cameraSensitivity = 1;
+let cameraYaw = 0;
+let cameraPitch = 0.48;
+let cameraDistance = 5.8;
+let graphicsQuality = "high";
 
-scene.add(
-  new THREE.HemisphereLight(0xe3edff, 0x62533c, 1.5)
-);
+let moveX = 0;
+let moveY = 0;
+let jumpVelocity = 0;
+let isJumping = false;
 
-const sun = new THREE.DirectionalLight(0xffe4bd, 2.5);
+const clock = new THREE.Clock();
+const roadNetwork = [];
+const traffic = [];
+const villagers = [];
+const animals = [];
+const birds = [];
 
-sun.position.set(-55, 95, 45);
-sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
+let playerActor = null;
+let dogActor = null;
 
-Object.assign(sun.shadow.camera, {
-  left: -110,
-  right: 110,
-  top: 110,
-  bottom: -110,
-  near: 1,
-  far: 250
-});
-
-sun.shadow.bias = -0.0002;
-scene.add(sun);
-
-const fillLight = new THREE.DirectionalLight(0xb8d5ff, 0.42);
-fillLight.position.set(50, 35, -60);
-scene.add(fillLight);
-
-/* ==========================================
+/* =====================================================
    MATERIALS
-========================================== */
+===================================================== */
 
 function mat(color, roughness = 0.9, metalness = 0) {
   return new THREE.MeshStandardMaterial({
-    color,
-    roughness,
-    metalness
+    color, roughness, metalness
   });
 }
 
@@ -147,7 +85,7 @@ const M = {
   grass: mat(0x647c43),
   field: mat(0x7e8845),
   dirt: mat(0x806044),
-  road: mat(0x8c6b4d),
+  road: mat(0x343638),
   rut: mat(0x59432f),
   water: mat(0x477f8c, 0.2),
   wood: mat(0x60442e),
@@ -167,18 +105,39 @@ function addMesh(parent, geometry, material, x = 0, y = 0, z = 0) {
 
 function addBox(parent, x, y, z, sx, sy, sz, material) {
   return addMesh(
-    parent,
-    new THREE.BoxGeometry(sx, sy, sz),
-    material,
-    x, y, z
+    parent, new THREE.BoxGeometry(sx, sy, sz),
+    material, x, y, z
   );
 }
 
-/* ==========================================
-   GROUND TEXTURES
-========================================== */
+/* =====================================================
+   LIGHTING
+===================================================== */
 
-function makeNoiseTexture(base, colors, amount = 6500) {
+scene.add(new THREE.HemisphereLight(0xe3edff, 0x62533c, 1.6));
+
+const sun = new THREE.DirectionalLight(0xffe4bd, 2.5);
+sun.position.set(-55, 95, 45);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+
+Object.assign(sun.shadow.camera, {
+  left: -150, right: 150,
+  top: 150, bottom: -150,
+  near: 1, far: 300
+});
+
+scene.add(sun);
+
+const fillLight = new THREE.DirectionalLight(0xb8d5ff, 0.42);
+fillLight.position.set(50, 35, -60);
+scene.add(fillLight);
+
+/* =====================================================
+   TEXTURE GENERATOR
+===================================================== */
+
+function makeNoiseTexture(base, colors, amount = 7000) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 512;
@@ -189,15 +148,15 @@ function makeNoiseTexture(base, colors, amount = 6500) {
 
   for (let i = 0; i < amount; i++) {
     ctx.globalAlpha = 0.08 + Math.random() * 0.25;
-    ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-
+    ctx.fillStyle = colors[
+      Math.floor(Math.random() * colors.length)
+    ];
     ctx.beginPath();
     ctx.arc(
       Math.random() * 512,
       Math.random() * 512,
       0.4 + Math.random() * 2.4,
-      0,
-      Math.PI * 2
+      0, Math.PI * 2
     );
     ctx.fill();
   }
@@ -208,7 +167,6 @@ function makeNoiseTexture(base, colors, amount = 6500) {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.colorSpace = THREE.SRGBColorSpace;
-
   return texture;
 }
 
@@ -220,18 +178,34 @@ grassTexture.repeat.set(35, 35);
 M.grass.map = grassTexture;
 M.grass.needsUpdate = true;
 
-const dirtTexture = makeNoiseTexture("#826044", [
-  "#b18b5d", "#65452e", "#9c7953", "#c1a078"
-]);
+const dirtTexture = makeNoiseTexture("#806044", [
+  "#b18b5d", "#65452e", "#9c7953",
+  "#c1a078", "#715137"
+], 10000);
 
-dirtTexture.repeat.set(2, 42);
-M.road.map = dirtTexture;
-M.road.color.set(0xffffff);
-M.road.needsUpdate = true;
+dirtTexture.repeat.set(2, 40);
+M.dirt.map = dirtTexture;
+M.dirt.needsUpdate = true;
 
-/* ==========================================
-   TERRAIN AND ROADS
-========================================== */
+const asphaltTexture = makeNoiseTexture("#343638", [
+  "#454749", "#292b2d", "#555657", "#383a3c"
+], 11000);
+
+asphaltTexture.repeat.set(3, 35);
+
+const asphaltMaterial = new THREE.MeshStandardMaterial({
+  map: asphaltTexture,
+  roughness: 0.94
+});
+
+const dirtRoadMaterial = new THREE.MeshStandardMaterial({
+  map: dirtTexture,
+  roughness: 1
+});
+
+/* =====================================================
+   TERRAIN
+===================================================== */
 
 const ground = addMesh(
   scene,
@@ -239,43 +213,229 @@ const ground = addMesh(
   M.grass,
   0, -0.12, 0
 );
-
 ground.rotation.x = -Math.PI / 2;
 
-addBox(scene, 0, 0.005, 0, 12, 0.09, 440, M.road);
+/* =====================================================
+   ROAD SYSTEM
+   4 DEVELOPED HIGHWAYS
+   MANY INNER ROADS
+   REALISTIC DIRT ROADS
+===================================================== */
 
-for (const x of [-2.65, 2.65]) {
-  const rut = addMesh(
+const roadLine = mat(0xe8dfbd);
+const yellowLine = mat(0xe6c64e);
+const curbMaterial = mat(0x777873);
+const sidewalkMaterial = mat(0xaaa69a);
+const drainMaterial = mat(0x393b38);
+const gravelMaterial = mat(0x777064);
+
+function roadPlane(x, z, width, length, material, rotation = 0, y = 0.04) {
+  const road = addMesh(
     scene,
-    new THREE.PlaneGeometry(0.48, 440),
-    M.rut,
-    x, 0.055, 0
+    new THREE.PlaneGeometry(width, length),
+    material, x, y, z
   );
-  rut.rotation.x = -Math.PI / 2;
+  road.rotation.x = -Math.PI / 2;
+  road.rotation.z = rotation;
+  return road;
 }
 
-addBox(scene, -10, 0.005, -35, 90, 0.09, 6, M.road);
-addBox(scene, 40, 0.005, 60, 90, 0.09, 6, M.road);
-addBox(scene, -45, 0.005, 125, 75, 0.09, 6, M.road);
-addBox(scene, 38, 0.005, -125, 75, 0.09, 6, M.road);
+function makeHighway(x, z, width, length, direction = "z") {
+  const horizontal = direction === "x";
+  const rotation = horizontal ? -Math.PI / 2 : 0;
 
-/* ==========================================
-   FARM FIELDS
-========================================== */
+  roadPlane(x, z, width, length, asphaltMaterial, rotation, 0.055);
+
+  roadNetwork.push({
+    type: "highway", x, z, width, length, direction
+  });
+
+  for (const side of [-1, 1]) {
+    if (!horizontal) {
+      addBox(scene, x + side * (width / 2 + 0.5), 0.015, z,
+        1, 0.14, length, curbMaterial);
+
+      addBox(scene, x + side * (width / 2 + 1.5), 0.02, z,
+        1, 0.12, length, sidewalkMaterial);
+
+      addBox(scene, x + side * (width / 2 + 2.2), 0.015, z,
+        0.25, 0.1, length, drainMaterial);
+    } else {
+      addBox(scene, x, 0.015, z + side * (width / 2 + 0.5),
+        length, 0.14, 1, curbMaterial);
+
+      addBox(scene, x, 0.02, z + side * (width / 2 + 1.5),
+        length, 0.12, 1, sidewalkMaterial);
+
+      addBox(scene, x, 0.015, z + side * (width / 2 + 2.2),
+        length, 0.1, 0.25, drainMaterial);
+    }
+  }
+
+  if (!horizontal) {
+    for (const side of [-1, 1]) {
+      addBox(scene, x + side * (width / 2 - 0.35), 0.065, z,
+        0.13, 0.018, length, roadLine);
+    }
+
+    for (let p = -length / 2 + 3; p < length / 2; p += 9) {
+      addBox(scene, x, 0.067, z + p,
+        0.18, 0.02, 4.5, yellowLine);
+    }
+  } else {
+    for (const side of [-1, 1]) {
+      addBox(scene, x, 0.065, z + side * (width / 2 - 0.35),
+        length, 0.018, 0.13, roadLine);
+    }
+
+    for (let p = -length / 2 + 3; p < length / 2; p += 9) {
+      addBox(scene, x + p, 0.067, z,
+        4.5, 0.02, 0.18, yellowLine);
+    }
+  }
+}
+
+function makeVillageRoad(x, z, width, length, direction = "z") {
+  const horizontal = direction === "x";
+  const rotation = horizontal ? -Math.PI / 2 : 0;
+
+  roadPlane(x, z, width, length, asphaltMaterial, rotation, 0.035);
+
+  roadNetwork.push({
+    type: "village", x, z, width, length, direction
+  });
+}
+
+function makeDirtRoad(x, z, width, length, direction = "z") {
+  const horizontal = direction === "x";
+  const rotation = horizontal ? -Math.PI / 2 : 0;
+
+  roadPlane(x, z, width, length, dirtRoadMaterial, rotation, 0.025);
+
+  roadNetwork.push({
+    type: "dirt", x, z, width, length, direction
+  });
+
+  for (const side of [-1, 1]) {
+    if (!horizontal) {
+      roadPlane(
+        x + side * width * 0.23, z,
+        0.48, length, M.rut, 0, 0.034
+      );
+    } else {
+      roadPlane(
+        x, z + side * width * 0.23,
+        length, 0.48, M.rut, -Math.PI / 2, 0.034
+      );
+    }
+  }
+
+  const count = Math.floor(length * 0.5);
+
+  for (let i = 0; i < count; i++) {
+    const along = (Math.random() - 0.5) * length;
+    const side = (Math.random() > 0.5 ? 1 : -1) *
+      (width / 2 + Math.random() * 1.1);
+
+    const px = horizontal ? x + along : x + side;
+    const pz = horizontal ? z + side : z + along;
+
+    const stone = addMesh(
+      scene,
+      new THREE.DodecahedronGeometry(
+        0.06 + Math.random() * 0.12, 0
+      ),
+      gravelMaterial,
+      px, 0.06, pz
+    );
+    stone.scale.y = 0.35;
+  }
+}
+
+// Four main highways
+makeHighway(-105, 0, 12, 440, "z");
+makeHighway(-55, 0, 12, 440, "z");
+makeHighway(55, 0, 12, 440, "z");
+makeHighway(105, 0, 12, 440, "z");
+
+// Main cross highways
+makeHighway(0, -150, 11, 420, "x");
+makeHighway(0, 150, 11, 420, "x");
+
+// Inner streets
+for (const x of [-135, -125, -85, -75, -35, -25, 0, 25, 35, 75, 85, 125, 135]) {
+  makeVillageRoad(x, 0, 5.5, 390, "z");
+}
+
+for (const z of [-190, -170, -130, -110, -90, -65, -40, -15, 15, 40, 65, 90, 110, 130, 170, 190]) {
+  makeVillageRoad(0, z, 5.5, 280, "x");
+}
+
+// More connecting streets
+const connectingRoads = [
+  [-155, -145, 100, 4.2, "x"],
+  [-150, -95, 115, 4.2, "x"],
+  [-145, -45, 110, 4.2, "x"],
+  [-150, 45, 110, 4.2, "x"],
+  [-145, 95, 110, 4.2, "x"],
+  [-145, 145, 110, 4.2, "x"],
+  [150, -145, 110, 4.2, "x"],
+  [145, -95, 110, 4.2, "x"],
+  [150, -45, 110, 4.2, "x"],
+  [145, 45, 110, 4.2, "x"],
+  [150, 95, 110, 4.2, "x"],
+  [145, 145, 110, 4.2, "x"],
+  [-100, -200, 4.2, 100, "z"],
+  [-65, -200, 4.2, 100, "z"],
+  [-15, -200, 4.2, 100, "z"],
+  [15, 200, 4.2, 100, "z"],
+  [65, 200, 4.2, 100, "z"],
+  [100, 200, 4.2, 100, "z"]
+];
+
+for (const [x, z, width, length, direction] of connectingRoads) {
+  makeVillageRoad(x, z, width, length, direction);
+}
+
+// Rural dirt roads
+const dirtRoads = [
+  [-180, -120, 5.2, 110, "z"],
+  [-165, -30, 4.5, 90, "z"],
+  [-175, 80, 5, 100, "z"],
+  [-150, 180, 4.5, 90, "z"],
+  [175, -130, 5, 110, "z"],
+  [165, -30, 4.5, 100, "z"],
+  [180, 75, 5, 100, "z"],
+  [160, 175, 4.5, 90, "z"],
+  [-190, -155, 4.5, 90, "x"],
+  [-180, -75, 4.5, 100, "x"],
+  [-175, 25, 4.5, 100, "x"],
+  [-180, 125, 4.5, 100, "x"],
+  [180, -155, 4.5, 90, "x"],
+  [180, -75, 4.5, 100, "x"],
+  [175, 25, 4.5, 100, "x"],
+  [180, 125, 4.5, 100, "x"],
+  [-45, -210, 4, 70, "z"],
+  [45, -210, 4, 70, "z"],
+  [-45, 210, 4, 70, "z"],
+  [45, 210, 4, 70, "z"]
+];
+
+for (const road of dirtRoads) makeDirtRoad(...road);
+
+/* =====================================================
+   FIELDS, CANALS AND PONDS
+===================================================== */
 
 function makeField(x, z, width, depth) {
   addBox(scene, x, 0.005, z, width, 0.08, depth, M.field);
 
   const cropMaterial = mat(0x92954a);
-  const cropGeometry = new THREE.ConeGeometry(0.12, 0.75, 5);
-
-  const total =
-    Math.floor(width / 3) * Math.floor(depth / 4);
+  const geometry = new THREE.ConeGeometry(0.12, 0.75, 5);
+  const total = Math.floor(width / 3) * Math.floor(depth / 4);
 
   const crops = new THREE.InstancedMesh(
-    cropGeometry,
-    cropMaterial,
-    total
+    geometry, cropMaterial, total
   );
 
   const dummy = new THREE.Object3D();
@@ -301,24 +461,14 @@ makeField(-82, 65, 95, 100);
 makeField(83, 100, 100, 90);
 makeField(-75, 180, 90, 45);
 
-/* ==========================================
-   CANALS AND PONDS
-========================================== */
-
 function makeCanal(x, z, width, length, rotation = 0) {
   const group = new THREE.Group();
 
   addBox(group, 0, 0.02, 0, width, 0.12, length, M.water);
 
   for (const side of [-1, 1]) {
-    addBox(
-      group,
-      side * (width / 2 + 0.3),
-      0.02,
-      0,
-      0.55, 0.32, length,
-      M.dirt
-    );
+    addBox(group, side * (width / 2 + 0.3), 0.02, 0,
+      0.55, 0.32, length, M.dirt);
   }
 
   group.position.set(x, 0, z);
@@ -332,12 +482,9 @@ makeCanal(0, -165, 2.2, 250, Math.PI / 2);
 
 function makePond(x, z, rx, rz) {
   const pond = addMesh(
-    scene,
-    new THREE.CircleGeometry(1, 48),
-    M.water,
-    x, 0.03, z
+    scene, new THREE.CircleGeometry(1, 48),
+    M.water, x, 0.03, z
   );
-
   pond.rotation.x = -Math.PI / 2;
   pond.scale.set(rx, rz, 1);
 }
@@ -345,9 +492,9 @@ function makePond(x, z, rx, rz) {
 makePond(-48, -20, 12, 8);
 makePond(55, 145, 15, 10);
 
-/* ==========================================
-   NEPALI VILLAGE HOUSES
-========================================== */
+/* =====================================================
+   HOUSES
+===================================================== */
 
 const plaster = mat(0xbca989);
 const darkPlaster = mat(0x927d62);
@@ -361,39 +508,28 @@ function makeHouse(x, z, variant = 0) {
   addBox(house, 0, 2, 0, 10, 4, 8, wall);
 
   const leftRoof = addMesh(
-    house,
-    new THREE.BoxGeometry(5.8, 0.22, 9),
-    roofMaterial,
-    -2.55, 4.25, 0
+    house, new THREE.BoxGeometry(5.8, 0.22, 9),
+    roofMaterial, -2.55, 4.25, 0
   );
   leftRoof.rotation.z = -0.35;
 
   const rightRoof = addMesh(
-    house,
-    new THREE.BoxGeometry(5.8, 0.22, 9),
-    roofMaterial,
-    2.55, 4.25, 0
+    house, new THREE.BoxGeometry(5.8, 0.22, 9),
+    roofMaterial, 2.55, 4.25, 0
   );
   rightRoof.rotation.z = 0.35;
 
   addBox(house, 0, 4.22, 4.52, 11, 0.18, 0.16, wood);
-  addBox(house, 0, 4.22, -4.52, 11, 0.18, 0.16, wood);
   addBox(house, 0, 1.05, 4.06, 1.45, 2.1, 0.13, wood);
-
-  for (const side of [-1, 1]) {
-    addBox(house, side * 2.7, 2.55, 4.1, 1.35, 1.1, 0.12, M.stone);
-    addBox(house, side * 2.7, 2.55, 4.18, 0.07, 1.2, 0.08, wood);
-    addBox(house, side * 2.7, 2.55, 4.18, 1.45, 0.07, 0.08, wood);
-  }
-
   addBox(house, 0, 0.18, 5.2, 12, 0.25, 2.8, darkPlaster);
 
   for (const side of [-1, 1]) {
+    addBox(house, side * 2.7, 2.55, 4.1,
+      1.35, 1.1, 0.12, M.stone);
+
     addMesh(
-      house,
-      new THREE.CylinderGeometry(0.12, 0.15, 3.5, 12),
-      wood,
-      side * 5, 1.85, 5.7
+      house, new THREE.CylinderGeometry(0.12, 0.15, 3.5, 12),
+      wood, side * 5, 1.85, 5.7
     );
   }
 
@@ -408,49 +544,18 @@ const housePositions = [
   [-25, 105, 1], [25, 145, 0],
   [-25, 175, 1], [-42, -100, 0],
   [43, -65, 1], [-45, 55, 0],
-  [45, 110, 1]
+  [45, 110, 1],
+  [-15, -125, 0], [15, -130, 1],
+  [-40, -5, 0], [40, 15, 1],
+  [-15, 55, 0], [15, 95, 1],
+  [-40, 135, 0], [40, 175, 1]
 ];
 
-for (const position of housePositions) {
-  makeHouse(...position);
-}
+for (const position of housePositions) makeHouse(...position);
 
-/* ==========================================
-   HAYSTACKS
-========================================== */
-
-function makeHaystack(x, z, scale = 1) {
-  const group = new THREE.Group();
-  const hay = mat(0xa88a4d);
-
-  addMesh(
-    group,
-    new THREE.CylinderGeometry(
-      0.9 * scale, 1.1 * scale, 1.1 * scale, 24
-    ),
-    hay,
-    0, 0.55 * scale, 0
-  );
-
-  addMesh(
-    group,
-    new THREE.ConeGeometry(1.05 * scale, 1.15 * scale, 24),
-    hay,
-    0, 1.6 * scale, 0
-  );
-
-  group.position.set(x, 0, z);
-  scene.add(group);
-}
-
-makeHaystack(-34, -91, 1.1);
-makeHaystack(36, -42, 0.9);
-makeHaystack(-39, 78, 1);
-makeHaystack(38, 155, 1.1);
-
-/* ==========================================
-   FENCES
-========================================== */
+/* =====================================================
+   FENCES AND HAYSTACKS
+===================================================== */
 
 function makeFence(x, z, length, rotation = 0) {
   const group = new THREE.Group();
@@ -458,7 +563,6 @@ function makeFence(x, z, length, rotation = 0) {
 
   for (let i = 0; i <= sections; i++) {
     const px = -length / 2 + length / sections * i;
-
     addBox(group, px, 0.6, 0, 0.14, 1.2, 0.14, M.wood);
   }
 
@@ -478,9 +582,30 @@ makeFence(38, -82, 12, Math.PI / 2);
 makeFence(-42, 91, 18);
 makeFence(39, 143, 16);
 
-/* ==========================================
-   ELECTRIC POLES AND WIRES
-========================================== */
+function makeHaystack(x, z, scale = 1) {
+  const group = new THREE.Group();
+  const hay = mat(0xa88a4d);
+
+  addMesh(group,
+    new THREE.CylinderGeometry(0.9 * scale, 1.1 * scale, 1.1 * scale, 24),
+    hay, 0, 0.55 * scale, 0);
+
+  addMesh(group,
+    new THREE.ConeGeometry(1.05 * scale, 1.15 * scale, 24),
+    hay, 0, 1.6 * scale, 0);
+
+  group.position.set(x, 0, z);
+  scene.add(group);
+}
+
+makeHaystack(-34, -91, 1.1);
+makeHaystack(36, -42, 0.9);
+makeHaystack(-39, 78, 1);
+makeHaystack(38, 155, 1.1);
+
+/* =====================================================
+   ELECTRIC POLES
+===================================================== */
 
 const poleMaterial = mat(0x777b78);
 const wireMaterial = mat(0x252b2c);
@@ -488,24 +613,11 @@ const wireMaterial = mat(0x252b2c);
 function makePole(x, z) {
   const pole = new THREE.Group();
 
-  addMesh(
-    pole,
+  addMesh(pole,
     new THREE.CylinderGeometry(0.13, 0.2, 10, 12),
-    poleMaterial,
-    0, 5, 0
-  );
+    poleMaterial, 0, 5, 0);
 
   addBox(pole, 0, 9.2, 0, 3.2, 0.16, 0.18, M.wood);
-
-  for (const side of [-1, 0, 1]) {
-    addMesh(
-      pole,
-      new THREE.CylinderGeometry(0.08, 0.08, 0.4, 8),
-      mat(0xe0ded5),
-      side * 1.15, 9.48, 0
-    );
-  }
-
   pole.position.set(x, 0, z);
   scene.add(pole);
 }
@@ -515,32 +627,9 @@ for (let z = -190; z <= 190; z += 38) {
   makePole(10, z);
 }
 
-function makeWire(x1, z1, x2, z2) {
-  const curve = new THREE.QuadraticBezierCurve3(
-    new THREE.Vector3(x1, 9.5, z1),
-    new THREE.Vector3(
-      (x1 + x2) / 2,
-      8.5,
-      (z1 + z2) / 2
-    ),
-    new THREE.Vector3(x2, 9.5, z2)
-  );
-
-  addMesh(
-    scene,
-    new THREE.TubeGeometry(curve, 20, 0.025, 5, false),
-    wireMaterial
-  );
-}
-
-for (let z = -190; z < 190; z += 38) {
-  makeWire(-10, z, -10, z + 38);
-  makeWire(10, z, 10, z + 38);
-}
-
-/* ==========================================
+/* =====================================================
    GLB ASSETS
-========================================== */
+===================================================== */
 
 const ASSET_PATH = "./assets/";
 
@@ -568,75 +657,35 @@ const ASSETS = {
   guitar: "acoustic-guitar-v1-lod0.glb"
 };
 
-/* ==========================================
-   LOADERS — MESHOPT + KTX2
-========================================== */
-
 const loader = new GLTFLoader();
-
-/* Meshopt compressed GLB support */
 loader.setMeshoptDecoder(MeshoptDecoder);
 
-/* KTX2 / Basis compressed texture support */
 const ktx2Loader = new KTX2Loader();
-
 ktx2Loader.setTranscoderPath(
   "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/basis/"
 );
-
-/* Detect iPhone GPU texture support */
 ktx2Loader.detectSupport(renderer);
-
-/* Register KTX2 before loading ANY GLB */
 loader.setKTX2Loader(ktx2Loader);
-
-/* ==========================================
-   ASSET LIBRARY
-========================================== */
 
 const assetLibrary = {};
 
 const REQUIRED_ASSETS = [
-  "player",
-  "man",
-  "cow",
-  "bull",
-  "goat",
-  "dog",
-  "tractor",
-  "car",
-  "motorcycle",
-  "tree",
-  "shop",
-  "well"
+  "player", "man", "cow", "bull", "goat",
+  "dog", "tractor", "car", "motorcycle",
+  "tree", "shop", "well"
 ];
 
 const OPTIONAL_ASSETS = [
-  "childGirl",
-  "childBoy",
-  "elderlyWoman",
-  "grandfather",
-  "electricBike",
-  "mountainBike",
-  "bmxBike",
-  "villageTile",
-  "guitar"
+  "childGirl", "childBoy", "elderlyWoman",
+  "grandfather", "electricBike", "mountainBike",
+  "bmxBike", "villageTile", "guitar"
 ];
 
-/* ==========================================
-   ASSET LOADER
-========================================== */
-
 async function loadOneAsset(name) {
-  if (assetLibrary[name]) {
-    return assetLibrary[name];
-  }
+  if (assetLibrary[name]) return assetLibrary[name];
 
   const file = ASSETS[name];
-
-  if (!file) {
-    throw new Error("Asset mapping missing: " + name);
-  }
+  if (!file) throw new Error("Asset mapping missing: " + name);
 
   const url = new URL(
     ASSET_PATH + encodeURIComponent(file),
@@ -648,24 +697,18 @@ async function loadOneAsset(name) {
   try {
     gltf = await loader.loadAsync(url);
   } catch (error) {
-    throw new Error(
-      `${file} failed: ${error?.message || error}`
-    );
+    throw new Error(`${file} failed: ${error?.message || error}`);
   }
 
-  if (!gltf?.scene) {
-    throw new Error("GLB model empty: " + file);
-  }
+  if (!gltf?.scene) throw new Error("Empty GLB: " + file);
 
   gltf.scene.traverse(object => {
     if (!object.isMesh) return;
-
     object.castShadow = true;
     object.receiveShadow = true;
 
     const materials = Array.isArray(object.material)
-      ? object.material
-      : [object.material];
+      ? object.material : [object.material];
 
     for (const material of materials) {
       if (material?.map) {
@@ -678,41 +721,13 @@ async function loadOneAsset(name) {
   return gltf;
 }
 
-async function loadAssets() {
-  let loaded = 0;
-
-  for (const name of REQUIRED_ASSETS) {
-    status(
-      `LOADING ${name.toUpperCase()}...`,
-      5 + loaded / REQUIRED_ASSETS.length * 68
-    );
-
-    await loadOneAsset(name);
-    loaded++;
-  }
-
-  status("LOADING OPTIONAL VILLAGE PEOPLE...", 76);
-
-  for (const name of OPTIONAL_ASSETS) {
-    try {
-      await loadOneAsset(name);
-    } catch (error) {
-      console.warn("Optional asset skipped:", name, error);
-    }
-  }
-}
-
-/* ==========================================
+/* =====================================================
    MODEL HELPERS
-========================================== */
+===================================================== */
 
 function cloneModel(name) {
   const gltf = assetLibrary[name];
-
-  if (!gltf?.scene) {
-    throw new Error("Required model not loaded: " + name);
-  }
-
+  if (!gltf?.scene) throw new Error("Model not loaded: " + name);
   return SkeletonUtils.clone(gltf.scene);
 }
 
@@ -721,7 +736,6 @@ function fitModel(model, targetHeight) {
 
   const bounds = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
-
   bounds.getSize(size);
 
   if (!Number.isFinite(size.y) || size.y <= 0) {
@@ -733,7 +747,6 @@ function fitModel(model, targetHeight) {
 
   const fitted = new THREE.Box3().setFromObject(model);
   model.position.y -= fitted.min.y;
-
   return model;
 }
 
@@ -742,11 +755,9 @@ function fitVehicle(model, targetLength) {
 
   const bounds = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
-
   bounds.getSize(size);
 
   const longest = Math.max(size.x, size.z);
-
   if (!Number.isFinite(longest) || longest <= 0) {
     throw new Error("Invalid vehicle dimensions");
   }
@@ -756,26 +767,19 @@ function fitVehicle(model, targetLength) {
 
   const fitted = new THREE.Box3().setFromObject(model);
   model.position.y -= fitted.min.y;
-
   return model;
 }
 
-/* ==========================================
-   CHARACTER ANIMATIONS
-========================================== */
+/* =====================================================
+   ACTORS AND ANIMATIONS
+===================================================== */
 
 function makeActor(name, height, position, rotation = 0) {
   const model = fitModel(cloneModel(name), height);
-
   const root = new THREE.Group();
   root.add(model);
 
-  root.position.set(
-    position.x,
-    position.y || 0,
-    position.z
-  );
-
+  root.position.set(position.x, position.y || 0, position.z);
   root.rotation.y = rotation;
   scene.add(root);
 
@@ -800,35 +804,19 @@ function makeActor(name, height, position, rotation = 0) {
 
   for (const [key, patterns] of Object.entries(animationMap)) {
     const clip = findAnimation(patterns);
-
-    if (clip) {
-      actions[key] = mixer.clipAction(clip);
-    }
+    if (clip) actions[key] = mixer.clipAction(clip);
   }
 
-  const firstAction =
-    actions.idle ||
-    actions.walk ||
-    Object.values(actions)[0] ||
-    null;
+  const first = actions.idle || actions.walk ||
+    Object.values(actions)[0] || null;
 
-  if (firstAction) {
-    firstAction.play();
-  }
+  if (first) first.play();
 
   return {
-    root,
-    model,
-    mixer,
-    actions,
-    current: firstAction,
+    root, model, mixer, actions, current: first,
 
     changeAnimation(key) {
-      const next =
-        actions[key] ||
-        actions.idle ||
-        actions.walk;
-
+      const next = actions[key] || actions.idle || actions.walk;
       if (!next || next === this.current) return;
 
       next.reset();
@@ -836,182 +824,130 @@ function makeActor(name, height, position, rotation = 0) {
       next.setEffectiveWeight(1);
       next.play();
 
-      if (this.current) {
-        this.current.crossFadeTo(next, 0.22, true);
-      }
-
+      if (this.current) this.current.crossFadeTo(next, 0.2, true);
       this.current = next;
     }
   };
 }
 
-/* ==========================================
+/* =====================================================
    VEHICLES
-========================================== */
+===================================================== */
 
 function makeVehicle(name, length, position, rotation = 0) {
   const model = fitVehicle(cloneModel(name), length);
   const root = new THREE.Group();
-
   root.add(model);
-
   root.position.set(position.x, 0, position.z);
   root.rotation.y = rotation;
-
   scene.add(root);
-
   return root;
 }
-
-/* ==========================================
-   IMPORTED VILLAGE PROPS
-========================================== */
-
-function addImportedProp(name, position, height, rotation = 0) {
-  if (!assetLibrary[name]) return null;
-
-  const model = fitModel(cloneModel(name), height);
-
-  model.position.x += position.x;
-  model.position.z += position.z;
-  model.rotation.y = rotation;
-
-  scene.add(model);
-
-  return model;
-}
-
-function createVillageAssets() {
-  addImportedProp("tree", { x: -17, z: -28 }, 8);
-  addImportedProp("tree", { x: 18, z: 28 }, 8);
-  addImportedProp("tree", { x: -45, z: 95 }, 9);
-  addImportedProp("tree", { x: 48, z: -90 }, 9);
-
-  addImportedProp("shop", { x: 13, z: -9 }, 5, Math.PI);
-  addImportedProp("shop", { x: -13, z: 78 }, 5);
-
-  addImportedProp("well", { x: -31, z: -55 }, 2.2);
-  addImportedProp("well", { x: 34, z: 116 }, 2.2);
-}
-
-/* ==========================================
-   PLAYER AND VILLAGERS
-========================================== */
-
-let playerActor = null;
-const villagers = [];
-
-function createPeople() {
-  playerActor = makeActor(
-    "player",
-    1.75,
-    { x: 0, y: 0, z: 0 }
-  );
-
-  const people = [
-    { name: "man", x: 8, z: 15, height: 1.7 },
-    { name: "man", x: -12, z: 30, height: 1.7 },
-    { name: "man", x: 30, z: -20, height: 1.7 },
-    { name: "man", x: -30, z: -25, height: 1.7 },
-    { name: "childGirl", x: 45, z: 65, height: 1.25 },
-    { name: "childBoy", x: -42, z: 12, height: 1.25 },
-    { name: "elderlyWoman", x: 18, z: 92, height: 1.6 },
-    { name: "grandfather", x: -18, z: -115, height: 1.65 }
-  ];
-
-  for (const person of people) {
-    if (!assetLibrary[person.name]) continue;
-
-    const actor = makeActor(
-      person.name,
-      person.height,
-      { x: person.x, y: 0, z: person.z }
-    );
-
-    villagers.push({
-      actor,
-      phase: Math.random() * 10,
-      originX: person.x,
-      originZ: person.z
-    });
-  }
-}
-
-/* ==========================================
-   VEHICLE TRAFFIC
-========================================== */
-
-const traffic = [];
 
 function createVehicles() {
   const tractor = makeVehicle(
     "tractor", 4.4, { x: -2.5, z: -155 }, Math.PI
   );
-
   traffic.push({ mesh: tractor, speed: 3.2 });
 
   const car = makeVehicle(
     "car", 5, { x: 2.5, z: -105 }, 0
   );
-
   traffic.push({ mesh: car, speed: -7 });
 
   const motorcycle = makeVehicle(
     "motorcycle", 2.1, { x: 2.5, z: 145 }, 0
   );
-
   traffic.push({ mesh: motorcycle, speed: -5.5 });
 
   const secondBike = makeVehicle(
     "motorcycle", 2.1, { x: -2.5, z: -65 }, Math.PI
   );
-
   traffic.push({ mesh: secondBike, speed: 5.5 });
 }
 
-/* ==========================================
-   FARM ANIMALS AND DOG
-========================================== */
+/* =====================================================
+   IMPORTED VILLAGE ASSETS
+===================================================== */
 
-const animals = [];
-let dogActor = null;
+function addImportedProp(name, position, height, rotation = 0) {
+  if (!assetLibrary[name]) return null;
 
-function createAnimal(name, x, z, height) {
-  const actor = makeActor(
-    name,
-    height,
-    { x, y: 0, z }
+  const model = fitModel(cloneModel(name), height);
+  model.position.x += position.x;
+  model.position.z += position.z;
+  model.rotation.y = rotation;
+  scene.add(model);
+  return model;
+}
+
+function createVillageAssets() {
+  const trees = [
+    [-17, -28], [18, 28], [-45, 95], [48, -90],
+    [-75, -35], [72, 35], [-80, 145], [85, -150],
+    [15, 180], [-15, -180]
+  ];
+
+  for (const [x, z] of trees) {
+    addImportedProp("tree", { x, z }, 8 + Math.random() * 2);
+  }
+
+  addImportedProp("shop", { x: 13, z: -9 }, 5, Math.PI);
+  addImportedProp("shop", { x: -13, z: 78 }, 5);
+  addImportedProp("well", { x: -31, z: -55 }, 2.2);
+  addImportedProp("well", { x: 34, z: 116 }, 2.2);
+}
+
+/* =====================================================
+   PLAYER, VILLAGERS AND ANIMALS
+===================================================== */
+
+function createPeople() {
+  playerActor = makeActor(
+    "player", 1.75, { x: 0, y: 0, z: 0 }
   );
 
-  animals.push({
-    actor,
-    phase: Math.random() * 8
-  });
+  const people = [
+    ["man", 8, 15, 1.7],
+    ["man", -12, 30, 1.7],
+    ["man", 30, -20, 1.7],
+    ["man", -30, -25, 1.7],
+    ["childGirl", 45, 65, 1.25],
+    ["childBoy", -42, 12, 1.25],
+    ["elderlyWoman", 18, 92, 1.6],
+    ["grandfather", -18, -115, 1.65]
+  ];
+
+  for (const [name, x, z, height] of people) {
+    if (!assetLibrary[name]) continue;
+
+    const actor = makeActor(name, height, { x, y: 0, z });
+    villagers.push({ actor });
+  }
+}
+
+function createAnimal(name, x, z, height) {
+  const actor = makeActor(name, height, { x, y: 0, z });
+  animals.push({ actor, phase: Math.random() * 8 });
 }
 
 function createAnimals() {
   createAnimal("cow", -17, -77, 1.45);
   createAnimal("cow", 31, -94, 1.4);
-
   createAnimal("bull", -33, -39, 1.5);
   createAnimal("bull", 34, 68, 1.5);
-
   createAnimal("goat", -18, 42, 0.75);
   createAnimal("goat", 30, 132, 0.75);
   createAnimal("goat", -39, 100, 0.75);
 
   dogActor = makeActor(
-    "dog",
-    0.85,
-    { x: 5, y: 0, z: 8 }
+    "dog", 0.85, { x: 5, y: 0, z: 8 }
   );
 }
 
-/* ==========================================
+/* =====================================================
    BIRDS
-========================================== */
-
-const birds = [];
+===================================================== */
 
 function createBirds() {
   const birdMaterial = mat(0x373a35);
@@ -1020,11 +956,9 @@ function createBirds() {
     const bird = new THREE.Group();
 
     const body = addMesh(
-      bird,
-      new THREE.SphereGeometry(0.2, 12, 10),
+      bird, new THREE.SphereGeometry(0.2, 12, 10),
       birdMaterial
     );
-
     body.scale.set(0.8, 0.7, 1.3);
 
     const wings = [];
@@ -1035,12 +969,9 @@ function createBirds() {
       bird.add(pivot);
 
       const wing = addMesh(
-        pivot,
-        new THREE.SphereGeometry(0.3, 10, 8),
-        birdMaterial,
-        side * 0.3, 0, 0
+        pivot, new THREE.SphereGeometry(0.3, 10, 8),
+        birdMaterial, side * 0.3, 0, 0
       );
-
       wing.scale.set(1.6, 0.12, 0.55);
       wings.push({ pivot, side });
     }
@@ -1052,55 +983,394 @@ function createBirds() {
     );
 
     scene.add(bird);
-
     birds.push({
-      mesh: bird,
-      wings,
+      mesh: bird, wings,
       phase: Math.random() * 10,
       speed: 1.2 + Math.random() * 1.4
     });
   }
 }
 
-/* ==========================================
+/* =====================================================
+   GAME INTRO / MAIN MENU
+===================================================== */
+
+const menu = document.createElement("div");
+menu.id = "mainMenu";
+
+menu.style.cssText = `
+position:fixed;inset:0;z-index:2000;
+display:flex;align-items:center;justify-content:center;
+flex-direction:column;text-align:center;
+font-family:Arial,sans-serif;color:white;
+background:
+linear-gradient(180deg,rgba(8,20,15,.35),rgba(5,13,10,.95)),
+url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85')
+center/cover no-repeat;
+padding:20px;box-sizing:border-box;
+`;
+
+menu.innerHTML = `
+<div style="
+font-size:clamp(38px,8vw,76px);
+font-weight:1000;letter-spacing:5px;
+text-shadow:0 5px 22px #000;
+color:#f4d58b;">
+HAMRO BASTI
+</div>
+
+<div style="
+font-size:13px;letter-spacing:5px;
+margin-top:8px;color:#fff;">
+A NEPALI VILLAGE OPEN WORLD
+</div>
+
+<div style="
+width:min(430px,90vw);
+margin-top:25px;padding:18px;
+background:rgba(0,0,0,.55);
+border:1px solid rgba(255,255,255,.25);
+border-radius:14px;line-height:1.7;">
+<div style="font-size:16px;font-weight:bold;color:#f4d58b">
+CREATED & FOUNDED BY
+</div>
+<div style="font-size:23px;font-weight:900">
+MAYUSH SHRESTHA
+</div>
+<div style="font-size:12px;color:#ddd;margin-top:8px">
+Original game creator. Creator's rights and royalties
+belong to Mayush Shrestha, subject to applicable
+agreements and law.
+</div>
+</div>
+
+<button id="startGameButton" style="
+margin-top:25px;padding:16px 55px;
+border:2px solid #f5d58b;border-radius:8px;
+background:linear-gradient(135deg,#e9bd69,#a66d29);
+color:#17120b;font-size:19px;font-weight:900;
+letter-spacing:2px;">
+START GAME
+</button>
+
+<button id="openSettingsButton" style="
+margin-top:12px;padding:12px 38px;
+border:1px solid white;border-radius:8px;
+background:rgba(0,0,0,.55);color:white;
+font-size:15px;font-weight:bold;">
+SETTINGS
+</button>
+
+<div id="menuStatus" style="
+margin-top:15px;font-size:12px;color:#eee;">
+HAMRO BASTI • DEVELOPMENT BUILD
+</div>
+`;
+
+document.body.appendChild(menu);
+
+/* =====================================================
+   SETTINGS PANEL
+===================================================== */
+
+const settings = document.createElement("div");
+settings.style.cssText = `
+position:fixed;inset:0;z-index:2500;
+display:none;align-items:center;justify-content:center;
+background:rgba(0,0,0,.78);
+font-family:Arial,sans-serif;color:white;padding:18px;
+`;
+
+settings.innerHTML = `
+<div style="
+width:min(420px,95vw);max-height:90vh;overflow:auto;
+padding:22px;background:#17231e;
+border:1px solid #b99a61;border-radius:15px;
+box-sizing:border-box;">
+<h2 style="margin:0 0 20px;color:#f1ce85">
+GAME SETTINGS
+</h2>
+
+<label>Joystick sensitivity</label>
+<input id="joySensitivity" type="range" min="0.5" max="2"
+step="0.1" value="1" style="width:100%;margin:12px 0 22px">
+
+<label>Camera sensitivity</label>
+<input id="camSensitivity" type="range" min="0.3" max="2.5"
+step="0.1" value="1" style="width:100%;margin:12px 0 22px">
+
+<label>Camera angle</label>
+<select id="cameraAngle" style="
+width:100%;padding:12px;margin:12px 0 22px;
+background:#293a31;color:white;border:1px solid #9caa9f;">
+<option value="close">Close third person</option>
+<option value="normal" selected>Normal third person</option>
+<option value="far">Far third person</option>
+<option value="high">High angle</option>
+</select>
+
+<label>Graphics quality</label>
+<select id="graphicsQuality" style="
+width:100%;padding:12px;margin:12px 0 22px;
+background:#293a31;color:white;border:1px solid #9caa9f;">
+<option value="high">High</option>
+<option value="medium">Medium</option>
+<option value="low">Low — better performance</option>
+</select>
+
+<button id="saveSettingsButton" style="
+width:100%;padding:13px;border:0;border-radius:8px;
+background:#d9b46c;color:#17130b;font-weight:bold;">
+SAVE SETTINGS
+</button>
+
+<button id="closeSettingsButton" style="
+width:100%;padding:12px;margin-top:10px;
+border:1px solid #aaa;border-radius:8px;
+background:transparent;color:white;">
+BACK
+</button>
+</div>
+`;
+
+document.body.appendChild(settings);
+
+const startButton = document.getElementById("startGameButton");
+const openSettingsButton = document.getElementById("openSettingsButton");
+const closeSettingsButton = document.getElementById("closeSettingsButton");
+const saveSettingsButton = document.getElementById("saveSettingsButton");
+
+openSettingsButton.addEventListener("click", () => {
+  settings.style.display = "flex";
+});
+
+closeSettingsButton.addEventListener("click", () => {
+  settings.style.display = "none";
+});
+
+saveSettingsButton.addEventListener("click", () => {
+  joystickSensitivity = Number(
+    document.getElementById("joySensitivity").value
+  );
+
+  cameraSensitivity = Number(
+    document.getElementById("camSensitivity").value
+  );
+
+  const angle = document.getElementById("cameraAngle").value;
+
+  if (angle === "close") {
+    cameraDistance = 4.3;
+    cameraPitch = 0.42;
+  } else if (angle === "normal") {
+    cameraDistance = 5.8;
+    cameraPitch = 0.48;
+  } else if (angle === "far") {
+    cameraDistance = 8;
+    cameraPitch = 0.55;
+  } else if (angle === "high") {
+    cameraDistance = 7;
+    cameraPitch = 0.85;
+  }
+
+  graphicsQuality = document.getElementById("graphicsQuality").value;
+
+  if (graphicsQuality === "low") {
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 0.8));
+    sun.castShadow = false;
+  } else if (graphicsQuality === "medium") {
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1));
+    sun.castShadow = false;
+  } else {
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+    sun.castShadow = true;
+  }
+
+  settings.style.display = "none";
+});
+
+/* =====================================================
+   IN-GAME HUD
+===================================================== */
+
+const hud = document.createElement("div");
+hud.style.cssText = `
+position:fixed;inset:0;z-index:100;
+pointer-events:none;font-family:Arial,sans-serif;
+display:none;
+`;
+
+hud.innerHTML = `
+<div style="
+position:absolute;top:14px;left:15px;
+font-size:clamp(16px,3vw,24px);
+font-weight:1000;letter-spacing:2px;
+color:#f4d58b;text-shadow:0 2px 8px #000;">
+HAMRO BASTI
+<div style="font-size:8px;letter-spacing:3px;color:white">
+NEPAL OPEN WORLD
+</div>
+</div>
+
+<div id="miniMapFrame" style="
+position:absolute;top:12px;right:12px;
+width:150px;height:150px;
+border:3px solid rgba(255,255,255,.9);
+border-radius:12px;overflow:hidden;
+background:rgba(17,30,23,.9);
+box-shadow:0 3px 14px #000;">
+<canvas id="miniMap" width="300" height="300"
+style="width:100%;height:100%;display:block"></canvas>
+<div style="
+position:absolute;bottom:4px;left:0;right:0;
+text-align:center;font-size:9px;color:white;
+text-shadow:0 1px 4px #000;">
+HAMRO BASTI MAP
+</div>
+</div>
+
+<div style="
+position:absolute;top:175px;right:18px;
+font-size:10px;color:white;text-shadow:0 2px 5px black;">
+N • VILLAGE
+</div>
+`;
+
+document.body.appendChild(hud);
+
+const mapCanvas = document.getElementById("miniMap");
+const mapCtx = mapCanvas.getContext("2d");
+
+/* =====================================================
+   MINI MAP — GTA STYLE VILLAGE MAP
+===================================================== */
+
+function drawMiniMap() {
+  if (!playerActor) return;
+
+  const ctx = mapCtx;
+  const w = mapCanvas.width;
+  const h = mapCanvas.height;
+
+  const player = playerActor.root.position;
+  const scale = 0.72;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#526b42";
+  ctx.fillRect(0, 0, w, h);
+
+  // Map follows player position
+  function mapX(x) {
+    return w / 2 + (x - player.x) * scale;
+  }
+
+  function mapY(z) {
+    return h / 2 + (z - player.z) * scale;
+  }
+
+  // Fields
+  ctx.fillStyle = "#788448";
+  for (const [x, z, width, depth] of [
+    [-75, -95, 90, 90],
+    [82, -80, 100, 100],
+    [-82, 65, 95, 100],
+    [83, 100, 100, 90],
+    [-75, 180, 90, 45]
+  ]) {
+    ctx.fillRect(
+      mapX(x - width / 2),
+      mapY(z - depth / 2),
+      width * scale,
+      depth * scale
+    );
+  }
+
+  // Road network
+  for (const road of roadNetwork) {
+    const horizontal = road.direction === "x";
+
+    ctx.beginPath();
+    ctx.lineCap = "butt";
+    ctx.lineWidth =
+      road.type === "highway" ? road.width * scale :
+      road.type === "village" ? road.width * scale :
+      road.width * scale;
+
+    ctx.strokeStyle =
+      road.type === "highway" ? "#e1d7b8" :
+      road.type === "village" ? "#a9a79a" :
+      "#a47a50";
+
+    if (horizontal) {
+      ctx.moveTo(mapX(road.x - road.length / 2), mapY(road.z));
+      ctx.lineTo(mapX(road.x + road.length / 2), mapY(road.z));
+    } else {
+      ctx.moveTo(mapX(road.x), mapY(road.z - road.length / 2));
+      ctx.lineTo(mapX(road.x), mapY(road.z + road.length / 2));
+    }
+
+    ctx.stroke();
+  }
+
+  // Houses
+  ctx.fillStyle = "#b68b62";
+  for (const [x, z] of housePositions) {
+    ctx.fillRect(mapX(x) - 3, mapY(z) - 3, 6, 6);
+  }
+
+  // Shops
+  ctx.fillStyle = "#e6c96e";
+  ctx.fillRect(mapX(13) - 4, mapY(-9) - 4, 8, 8);
+  ctx.fillRect(mapX(-13) - 4, mapY(78) - 4, 8, 8);
+
+  // Player arrow
+  ctx.save();
+  ctx.translate(w / 2, h / 2);
+  ctx.rotate(playerActor.root.rotation.y);
+
+  ctx.beginPath();
+  ctx.moveTo(0, -12);
+  ctx.lineTo(8, 10);
+  ctx.lineTo(0, 6);
+  ctx.lineTo(-8, 10);
+  ctx.closePath();
+
+  ctx.fillStyle = "#ffdf56";
+  ctx.strokeStyle = "#171717";
+  ctx.lineWidth = 2;
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Map border glow
+  ctx.strokeStyle = "rgba(255,255,255,.3)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, w - 2, h - 2);
+}
+
+/* =====================================================
    MOBILE CONTROLS
-========================================== */
+===================================================== */
 
 const controls = document.createElement("div");
-
 controls.style.cssText =
-  "position:fixed;inset:0;z-index:20;pointer-events:none";
-
+  "position:fixed;inset:0;z-index:120;pointer-events:none;display:none";
 document.body.appendChild(controls);
 
-/* JOYSTICK */
-
+// Joystick
 const joystick = document.createElement("div");
-
-joystick.id = "joystick";
-
 joystick.style.cssText = `
-position:absolute;
-left:25px;
-bottom:35px;
-width:125px;
-height:125px;
-border-radius:50%;
+position:absolute;left:25px;bottom:35px;
+width:125px;height:125px;border-radius:50%;
 background:rgba(20,25,25,.32);
 border:2px solid rgba(255,255,255,.55);
-pointer-events:auto;
-touch-action:none;
+pointer-events:auto;touch-action:none;
 `;
 
 const stick = document.createElement("div");
-
 stick.style.cssText = `
-position:absolute;
-width:52px;
-height:52px;
-left:35px;
-top:35px;
-border-radius:50%;
+position:absolute;width:52px;height:52px;
+left:35px;top:35px;border-radius:50%;
 background:rgba(255,255,255,.75);
 border:2px solid white;
 `;
@@ -1108,13 +1378,10 @@ border:2px solid white;
 joystick.appendChild(stick);
 controls.appendChild(joystick);
 
-let moveX = 0;
-let moveY = 0;
 let joyPointer = null;
 
 function updateJoystick(event) {
   const rect = joystick.getBoundingClientRect();
-
   let dx = event.clientX - (rect.left + rect.width / 2);
   let dy = event.clientY - (rect.top + rect.height / 2);
 
@@ -1129,8 +1396,8 @@ function updateJoystick(event) {
   stick.style.left = `${35 + dx}px`;
   stick.style.top = `${35 + dy}px`;
 
-  moveX = dx / max;
-  moveY = dy / max;
+  moveX = dx / max * joystickSensitivity;
+  moveY = dy / max * joystickSensitivity;
 }
 
 joystick.addEventListener("pointerdown", event => {
@@ -1140,9 +1407,7 @@ joystick.addEventListener("pointerdown", event => {
 });
 
 joystick.addEventListener("pointermove", event => {
-  if (event.pointerId === joyPointer) {
-    updateJoystick(event);
-  }
+  if (event.pointerId === joyPointer) updateJoystick(event);
 });
 
 function releaseJoystick(event) {
@@ -1151,7 +1416,6 @@ function releaseJoystick(event) {
   joyPointer = null;
   moveX = 0;
   moveY = 0;
-
   stick.style.left = "35px";
   stick.style.top = "35px";
 }
@@ -1159,35 +1423,18 @@ function releaseJoystick(event) {
 joystick.addEventListener("pointerup", releaseJoystick);
 joystick.addEventListener("pointercancel", releaseJoystick);
 
-/* ==========================================
-   JUMP BUTTON
-========================================== */
-
+// Jump button
 const jumpButton = document.createElement("button");
-
-jumpButton.id = "jump";
 jumpButton.textContent = "JUMP";
-
 jumpButton.style.cssText = `
-position:absolute;
-right:28px;
-bottom:48px;
-width:75px;
-height:75px;
-border-radius:50%;
-border:2px solid white;
-background:rgba(220,170,60,.78);
-color:white;
-font-weight:bold;
-font-size:15px;
-pointer-events:auto;
-touch-action:none;
+position:absolute;right:28px;bottom:48px;
+width:75px;height:75px;border-radius:50%;
+border:2px solid white;background:rgba(220,170,60,.78);
+color:white;font-weight:bold;font-size:15px;
+pointer-events:auto;touch-action:none;
 `;
 
 controls.appendChild(jumpButton);
-
-let jumpVelocity = 0;
-let isJumping = false;
 
 function jump() {
   if (gameStarted && !isJumping) {
@@ -1201,29 +1448,24 @@ jumpButton.addEventListener("pointerdown", event => {
   jump();
 });
 
-/* ==========================================
+/* =====================================================
    CAMERA TOUCH CONTROL
-========================================== */
-
-let cameraYaw = 0;
-let cameraPitch = 0.68;
-const cameraDistance = 9.5;
+===================================================== */
 
 let lookTouchId = null;
 let lastTouchX = 0;
 let lastTouchY = 0;
 
 window.addEventListener("touchstart", event => {
-  if (lookTouchId !== null) return;
+  if (!gameStarted || lookTouchId !== null) return;
 
   const touch = Array.from(event.changedTouches).find(item => {
     const element = document.elementFromPoint(
-      item.clientX,
-      item.clientY
+      item.clientX, item.clientY
     );
-
-    return element &&
-      !element.closest("#joystick,#jump");
+    return element && !element.closest(
+      "#mainMenu,#miniMapFrame,button,#joystick"
+    );
   });
 
   if (!touch) return;
@@ -1231,13 +1473,10 @@ window.addEventListener("touchstart", event => {
   lookTouchId = touch.identifier;
   lastTouchX = touch.clientX;
   lastTouchY = touch.clientY;
-}, {
-  capture: true,
-  passive: false
-});
+}, { capture: true, passive: false });
 
 window.addEventListener("touchmove", event => {
-  if (lookTouchId === null) return;
+  if (!gameStarted || lookTouchId === null) return;
 
   const touch = Array.from(event.touches).find(
     item => item.identifier === lookTouchId
@@ -1251,19 +1490,15 @@ window.addEventListener("touchmove", event => {
   lastTouchX = touch.clientX;
   lastTouchY = touch.clientY;
 
-  cameraYaw -= dx * 0.006;
+  cameraYaw -= dx * 0.006 * cameraSensitivity;
 
   cameraPitch = THREE.MathUtils.clamp(
-    cameraPitch + dy * 0.005,
-    0.18,
-    1.25
+    cameraPitch + dy * 0.005 * cameraSensitivity,
+    0.15, 1.25
   );
 
   event.preventDefault();
-}, {
-  capture: true,
-  passive: false
-});
+}, { capture: true, passive: false });
 
 function endCameraLook(event) {
   if (
@@ -1278,12 +1513,83 @@ function endCameraLook(event) {
 window.addEventListener("touchend", endCameraLook);
 window.addEventListener("touchcancel", endCameraLook);
 
-/* ==========================================
-   GAME LOOP
-========================================== */
+/* =====================================================
+   LOADING SCREEN
+===================================================== */
 
-const clock = new THREE.Clock();
-let elapsed = 0;
+const loading = document.createElement("div");
+loading.style.cssText = `
+position:fixed;inset:0;z-index:3000;
+background:#142019;color:white;
+display:none;align-items:center;justify-content:center;
+flex-direction:column;font:14px Arial;gap:14px;
+padding:25px;text-align:center;
+`;
+
+loading.innerHTML = `
+<div style="font-size:30px;font-weight:900;letter-spacing:4px">
+HAMRO BASTI
+</div>
+<div id="loadText">LOADING REAL 3D ASSETS...</div>
+<div style="width:230px;height:7px;background:#4b554e;border-radius:8px;overflow:hidden">
+<div id="loadBar" style="width:2%;height:7px;background:#d8b46d"></div>
+</div>
+<div id="loadError" style="max-width:310px;line-height:1.5;color:#ffb6a7"></div>
+<button id="retryButton" style="
+display:none;padding:12px 28px;border:0;border-radius:8px;
+background:#d8b46d;color:#171717;font-weight:bold">
+RETRY DOWNLOAD
+</button>
+`;
+
+document.body.appendChild(loading);
+
+const loadText = document.getElementById("loadText");
+const loadBar = document.getElementById("loadBar");
+const loadError = document.getElementById("loadError");
+const retryButton = document.getElementById("retryButton");
+
+function status(message, progress) {
+  loadText.textContent = message;
+  loadBar.style.width = `${progress}%`;
+}
+
+function showAssetError(error) {
+  loadText.textContent = "REAL 3D ASSET LOAD FAILED";
+  loadError.textContent = String(error?.message || error);
+  loadBar.style.width = "0%";
+  retryButton.style.display = "block";
+}
+
+/* =====================================================
+   LOAD ALL ASSETS
+===================================================== */
+
+async function loadAssets() {
+  let loaded = 0;
+
+  for (const name of REQUIRED_ASSETS) {
+    status(`LOADING ${name.toUpperCase()}...`,
+      5 + loaded / REQUIRED_ASSETS.length * 68);
+
+    await loadOneAsset(name);
+    loaded++;
+  }
+
+  status("LOADING OPTIONAL VILLAGE ASSETS...", 76);
+
+  for (const name of OPTIONAL_ASSETS) {
+    try {
+      await loadOneAsset(name);
+    } catch (error) {
+      console.warn("Optional asset skipped:", name, error);
+    }
+  }
+}
+
+/* =====================================================
+   GAME LOOP
+===================================================== */
 
 function animate() {
   requestAnimationFrame(animate);
@@ -1293,10 +1599,10 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.04);
   elapsed += dt;
 
-  /* PLAYER MOVEMENT */
-
+  // Player movement
   const forward = -moveY;
   const side = moveX;
+
   const moving = Math.hypot(forward, side) > 0.08;
 
   if (moving) {
@@ -1314,21 +1620,17 @@ function animate() {
     playerActor.root.position.z += dz / length * 5 * dt;
 
     playerActor.root.rotation.y = Math.atan2(
-      dx / length,
-      dz / length
+      dx / length, dz / length
     );
 
-    const speed = Math.hypot(moveX, moveY);
-
     playerActor.changeAnimation(
-      speed > 0.75 ? "run" : "walk"
+      Math.hypot(moveX, moveY) > 0.75 ? "run" : "walk"
     );
   } else {
     playerActor.changeAnimation("idle");
   }
 
-  /* JUMP PHYSICS */
-
+  // Jump physics
   if (isJumping) {
     playerActor.root.position.y += jumpVelocity * dt;
     jumpVelocity -= 18 * dt;
@@ -1342,15 +1644,13 @@ function animate() {
 
   playerActor.mixer.update(dt);
 
-  /* VILLAGERS */
-
+  // Villagers
   for (const villager of villagers) {
     villager.actor.mixer.update(dt);
     villager.actor.changeAnimation("idle");
   }
 
-  /* TRAFFIC */
-
+  // Vehicle traffic
   for (const vehicle of traffic) {
     vehicle.mesh.position.z += vehicle.speed * dt;
 
@@ -1363,8 +1663,7 @@ function animate() {
     }
   }
 
-  /* FARM ANIMALS */
-
+  // Animals
   for (const animal of animals) {
     animal.actor.mixer.update(dt);
 
@@ -1378,14 +1677,12 @@ function animate() {
     }
   }
 
-  /* GERMAN SHEPHERD */
-
+  // Dog follows player
   if (dogActor) {
     dogActor.mixer.update(dt);
 
     const playerPosition = playerActor.root.position;
     const dogPosition = dogActor.root.position;
-
     const distance = dogPosition.distanceTo(playerPosition);
 
     if (distance > 3.5) {
@@ -1397,8 +1694,7 @@ function animate() {
       dogPosition.z += direction.z * 2.2 * dt;
 
       dogActor.root.rotation.y = Math.atan2(
-        direction.x,
-        direction.z
+        direction.x, direction.z
       );
 
       dogActor.changeAnimation("walk");
@@ -1407,14 +1703,11 @@ function animate() {
     }
   }
 
-  /* BIRDS */
-
+  // Birds
   for (const bird of birds) {
     bird.mesh.position.x += bird.speed * dt;
-
     bird.mesh.position.y +=
       Math.sin(elapsed * 2 + bird.phase) * dt * 0.25;
-
     bird.mesh.position.z +=
       Math.cos(elapsed + bird.phase) * dt * 0.35;
 
@@ -1425,13 +1718,11 @@ function animate() {
     for (const wing of bird.wings) {
       wing.pivot.rotation.z =
         wing.side *
-        Math.sin(elapsed * 9 + bird.phase) *
-        0.72;
+        Math.sin(elapsed * 9 + bird.phase) * 0.72;
     }
   }
 
-  /* THIRD-PERSON CAMERA */
-
+  // Third-person camera
   const horizontalDistance =
     cameraDistance * Math.cos(cameraPitch);
 
@@ -1457,31 +1748,28 @@ function animate() {
     playerActor.root.position.z
   );
 
+  drawMiniMap();
   renderer.render(scene, camera);
 }
 
-/* ==========================================
-   START GAME AND RETRY
-========================================== */
-
-let loadingPromise = null;
+/* =====================================================
+   START GAME
+===================================================== */
 
 async function startGame() {
-  if (loadingPromise) return loadingPromise;
+  if (loadingPromise || gameStarted) return;
 
   loadingPromise = (async () => {
-    gameStarted = false;
-
+    loading.style.display = "flex";
     retryButton.style.display = "none";
     loadError.textContent = "";
-    loading.style.display = "flex";
 
     try {
-      status("LOADING REAL LOCAL 3D MODELS...", 3);
+      status("LOADING HAMRO BASTI...", 3);
 
       await loadAssets();
 
-      status("BUILDING NAYABASTI...", 82);
+      status("BUILDING VILLAGE...", 82);
 
       createVillageAssets();
       createPeople();
@@ -1489,27 +1777,27 @@ async function startGame() {
       createAnimals();
       createBirds();
 
-      status("STARTING GAME...", 96);
+      status("PREPARING GAME...", 96);
 
       camera.position.set(0, 7, 12);
       camera.lookAt(0, 1, 0);
 
-      gameStarted = true;
-      loading.remove();
+      menu.style.display = "none";
+      loading.style.display = "none";
+      hud.style.display = "block";
+      controls.style.display = "block";
 
+      gameStarted = true;
       clock.start();
       animate();
 
-      console.log(
-        "NAYABASTI — REAL LOCAL GLB ASSETS LOADED"
-      );
+      console.log("HAMRO BASTI — GAME STARTED");
+      console.log("Founder & Creator: Mayush Shrestha");
 
     } catch (error) {
       gameStarted = false;
       showAssetError(error);
-
-      console.error("NAYABASTI ASSET ERROR:", error);
-
+      console.error("HAMRO BASTI ASSET ERROR:", error);
     } finally {
       loadingPromise = null;
     }
@@ -1518,13 +1806,12 @@ async function startGame() {
   return loadingPromise;
 }
 
+startButton.addEventListener("click", startGame);
 retryButton.addEventListener("click", startGame);
 
-startGame();
-
-/* ==========================================
+/* =====================================================
    RESIZE
-========================================== */
+===================================================== */
 
 window.addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
@@ -1533,6 +1820,10 @@ window.addEventListener("resize", () => {
   renderer.setSize(innerWidth, innerHeight);
 
   renderer.setPixelRatio(
-    Math.min(devicePixelRatio || 1, 1.25)
+    Math.min(
+      devicePixelRatio || 1,
+      graphicsQuality === "low" ? 0.8 :
+      graphicsQuality === "medium" ? 1 : 1.5
+    )
   );
 });
