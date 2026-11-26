@@ -3,7 +3,7 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.m
 
 /* =========================================
    MAYUSH.GAMEPLAY — NAYABASTI TERAI
-   COMPLETE MOBILE THIRD-PERSON GAME
+   THIRD PERSON + TOUCH ORBIT CAMERA
 ========================================= */
 
 document.documentElement.style.cssText =
@@ -17,10 +17,7 @@ scene.background = new THREE.Color(0xa9cde0);
 scene.fog = new THREE.Fog(0xa9cde0, 90, 270);
 
 const camera = new THREE.PerspectiveCamera(
-  60,
-  innerWidth / innerHeight,
-  0.1,
-  500
+  60, innerWidth / innerHeight, 0.1, 500
 );
 
 const renderer = new THREE.WebGLRenderer({
@@ -43,9 +40,7 @@ document.body.appendChild(renderer.domElement);
 
 /* LIGHTING */
 
-scene.add(
-  new THREE.HemisphereLight(0xe5f5ff, 0x596b3b, 2)
-);
+scene.add(new THREE.HemisphereLight(0xe5f5ff, 0x596b3b, 2));
 
 const sun = new THREE.DirectionalLight(0xffe7bd, 2.2);
 sun.position.set(-50, 90, 50);
@@ -97,12 +92,7 @@ const M = {
 
 /* OBJECT HELPERS */
 
-function addBox(
-  x, y, z,
-  sx, sy, sz,
-  material,
-  shadow = true
-) {
+function addBox(x, y, z, sx, sy, sz, material, shadow = true) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(sx, sy, sz),
     material
@@ -115,12 +105,7 @@ function addBox(
   return mesh;
 }
 
-function addCylinder(
-  x, y, z,
-  rt, rb, h,
-  material,
-  segments = 10
-) {
+function addCylinder(x, y, z, rt, rb, h, material, segments = 10) {
   const mesh = new THREE.Mesh(
     new THREE.CylinderGeometry(rt, rb, h, segments),
     material
@@ -154,38 +139,35 @@ addBox(40, 0, 60, 75, 0.13, 7, M.dirt, false);
 addBox(-45, 0, 125, 65, 0.13, 6, M.dirt, false);
 addBox(38, 0, -125, 70, 0.13, 6, M.dirt, false);
 
-/* FARM FIELDS — OPTIMIZED */
+/* FARM FIELDS */
 
 function field(x, z, w, d, material) {
   addBox(x, 0, z, w, 0.12, d, material, false);
 
-  const columns = Math.floor((w - 4) / 4);
-  const rows = Math.floor((d - 4) / 5);
-  const count = columns * rows;
-
-  const cropGeometry = new THREE.BoxGeometry(
-    0.16, 0.65, 0.16
-  );
-
-  const crops = new THREE.InstancedMesh(
-    cropGeometry,
-    M.crop,
-    count
-  );
-
-  const dummy = new THREE.Object3D();
-  let index = 0;
+  const cropPositions = [];
 
   for (let px = -w / 2 + 2; px < w / 2 - 1; px += 4) {
     for (let pz = -d / 2 + 2; pz < d / 2 - 1; pz += 5) {
-      dummy.position.set(x + px, 0.38, z + pz);
-      dummy.rotation.z = (Math.random() - 0.5) * 0.15;
-      dummy.updateMatrix();
-      crops.setMatrixAt(index++, dummy.matrix);
+      cropPositions.push([x + px, z + pz]);
     }
   }
 
-  crops.count = index;
+  const cropGeometry = new THREE.BoxGeometry(0.16, 0.65, 0.16);
+  const crops = new THREE.InstancedMesh(
+    cropGeometry,
+    M.crop,
+    cropPositions.length
+  );
+
+  const dummy = new THREE.Object3D();
+
+  cropPositions.forEach((position, index) => {
+    dummy.position.set(position[0], 0.38, position[1]);
+    dummy.rotation.z = (Math.random() - 0.5) * 0.15;
+    dummy.updateMatrix();
+    crops.setMatrixAt(index, dummy.matrix);
+  });
+
   crops.instanceMatrix.needsUpdate = true;
   crops.castShadow = false;
   crops.receiveShadow = false;
@@ -590,17 +572,8 @@ function createLimb(x, y, material, width, height, depth) {
 
 const leftLeg = createLimb(-0.17, 0.68, pants, 0.23, 0.65, 0.25);
 const rightLeg = createLimb(0.17, 0.68, pants, 0.23, 0.65, 0.25);
-
 const leftArm = createLimb(-0.48, 1.6, shirt, 0.2, 0.75, 0.22);
 const rightArm = createLimb(0.48, 1.6, shirt, 0.2, 0.75, 0.22);
-
-/*
-  THREE CHARACTER DIRECTION RULE:
-
-  Local +Z = character front.
-  Initial heading PI = world -Z.
-  Camera stays behind the character.
-*/
 
 player.position.set(0, 0, 0);
 
@@ -741,7 +714,7 @@ const controls = document.createElement("div");
 controls.id = "mobile-controls";
 
 controls.innerHTML = `
-  <div id="game-label">NAYABASTI • FREE ROAM</div>
+  <div id="game-label">NAYABASTI • DRAG SCREEN TO LOOK</div>
   <div id="joystick"><div id="stick"></div></div>
   <button id="jump" type="button">JUMP</button>
 `;
@@ -836,13 +809,37 @@ window.addEventListener("keyup", e => {
   keys[e.key.toLowerCase()] = false;
 });
 
-/* CAMERA */
+/* CAMERA + TOUCH LOOK */
 
 const clock = new THREE.Clock();
-
 let walkTime = 0;
 
+/* Independent camera orbit angles */
+let cameraYaw = 0;
+let cameraPitch = 0.68;
+const cameraDistance = 9.5;
+
+let lookPointerId = null;
+let lastLookX = 0;
+let lastLookY = 0;
+
 const UP = new THREE.Vector3(0, 1, 0);
+
+function getCameraForward() {
+  return new THREE.Vector3(
+    -Math.sin(cameraYaw),
+    0,
+    -Math.cos(cameraYaw)
+  ).normalize();
+}
+
+function getCameraRight() {
+  return new THREE.Vector3(
+    Math.cos(cameraYaw),
+    0,
+    -Math.sin(cameraYaw)
+  ).normalize();
+}
 
 function getForward(rotation) {
   return new THREE.Vector3(0, 0, 1)
@@ -856,15 +853,56 @@ function getRight(rotation) {
     .normalize();
 }
 
-const initialForward = getForward(playerRotation);
-
-camera.position.set(
-  -initialForward.x * 8.5,
-  7,
-  -initialForward.z * 8.5
-);
-
+/* Initial camera position: behind player */
+camera.position.set(0, 6, cameraDistance);
 camera.lookAt(0, 1.2, 0);
+
+/* SWIPE EMPTY GAME SCREEN TO ROTATE CAMERA */
+
+renderer.domElement.addEventListener("pointerdown", e => {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  if (lookPointerId !== null) return;
+
+  lookPointerId = e.pointerId;
+  lastLookX = e.clientX;
+  lastLookY = e.clientY;
+
+  try {
+    renderer.domElement.setPointerCapture(e.pointerId);
+  } catch (_) {}
+});
+
+renderer.domElement.addEventListener("pointermove", e => {
+  if (e.pointerId !== lookPointerId) return;
+
+  const dx = e.clientX - lastLookX;
+  const dy = e.clientY - lastLookY;
+
+  lastLookX = e.clientX;
+  lastLookY = e.clientY;
+
+  /* Horizontal swipe = rotate around player */
+  cameraYaw -= dx * 0.006;
+
+  /* Vertical swipe = look up/down */
+  cameraPitch = THREE.MathUtils.clamp(
+    cameraPitch + dy * 0.0045,
+    0.22,
+    1.12
+  );
+});
+
+function stopCameraLook(e) {
+  if (e.pointerId === lookPointerId) {
+    lookPointerId = null;
+  }
+}
+
+renderer.domElement.addEventListener("pointerup", stopCameraLook);
+renderer.domElement.addEventListener("pointercancel", stopCameraLook);
+renderer.domElement.addEventListener("lostpointercapture", () => {
+  lookPointerId = null;
+});
 
 /* REMOVE LOADING */
 
@@ -898,27 +936,15 @@ function animate() {
     horizontal /= Math.max(1, inputLength);
     vertical /= Math.max(1, inputLength);
 
-    /*
-      JOYSTICK DIRECTION:
+    /* MOVEMENT RELATIVE TO CAMERA DIRECTION */
 
-      moveY < 0 = joystick UP
-      moveY > 0 = joystick DOWN
+    const forward = getCameraForward();
+    const right = getCameraRight();
 
-      Character local +Z = forward.
-      Therefore forward movement = -vertical.
-    */
-
-    const forward = getForward(playerRotation);
-    const right = getRight(playerRotation);
-
-    const direction = new THREE.Vector3();
-
-    direction.addScaledVector(right, horizontal);
-    direction.addScaledVector(forward, -vertical);
-
-    direction.normalize();
-
-    /* MOVEMENT */
+    const direction = new THREE.Vector3()
+      .addScaledVector(right, horizontal)
+      .addScaledVector(forward, -vertical)
+      .normalize();
 
     const speed = 6.5;
 
@@ -927,7 +953,7 @@ function animate() {
       speed * delta
     );
 
-    /* FACE THE MOVEMENT DIRECTION */
+    /* FACE THE DIRECTION OF MOVEMENT */
 
     playerRotation = Math.atan2(
       direction.x,
@@ -968,39 +994,36 @@ function animate() {
 
   player.position.y = playerHeight;
 
-  /* CAMERA FOLLOW — LOWER VIEW, LESS SKY */
+  /* CAMERA FOLLOW — TOUCH CONTROLLED ORBIT */
 
-  const forward = getForward(playerRotation);
+  const horizontalDistance =
+    cameraDistance * Math.cos(cameraPitch);
 
   const desiredCamera = new THREE.Vector3(
-    player.position.x - forward.x * 8.5,
-    player.position.y + 7,
-    player.position.z - forward.z * 8.5
+    player.position.x + Math.sin(cameraYaw) * horizontalDistance,
+    player.position.y + cameraDistance * Math.sin(cameraPitch),
+    player.position.z + Math.cos(cameraYaw) * horizontalDistance
   );
 
   camera.position.lerp(
     desiredCamera,
-    1 - Math.exp(-6 * delta)
+    1 - Math.exp(-7 * delta)
   );
 
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.2,
+    player.position.y + 1.25,
     player.position.z
   );
 
   /* WORLD BOUNDARY */
 
   player.position.x = THREE.MathUtils.clamp(
-    player.position.x,
-    -85,
-    85
+    player.position.x, -85, 85
   );
 
   player.position.z = THREE.MathUtils.clamp(
-    player.position.z,
-    -115,
-    115
+    player.position.z, -115, 115
   );
 
   /* NPC ANIMATION */
