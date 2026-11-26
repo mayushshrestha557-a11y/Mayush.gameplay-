@@ -1,12 +1,11 @@
 
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js";
 
-/* ==========================================
-   MAYUSH GAMEPLAY
-   NAYABASTI TERAI - COMPLETE VERSION
-========================================== */
+/* =========================================
+   MAYUSH.GAMEPLAY — NAYABASTI TERAI
+   COMPLETE MOBILE THIRD-PERSON GAME
+========================================= */
 
-// PAGE
 document.documentElement.style.cssText =
   "margin:0;width:100%;height:100%;overflow:hidden;";
 
@@ -15,10 +14,13 @@ document.body.style.cssText =
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xa9cde0);
-scene.fog = new THREE.Fog(0xa9cde0, 100, 320);
+scene.fog = new THREE.Fog(0xa9cde0, 90, 270);
 
 const camera = new THREE.PerspectiveCamera(
-  65, innerWidth / innerHeight, 0.1, 600
+  60,
+  innerWidth / innerHeight,
+  0.1,
+  500
 );
 
 const renderer = new THREE.WebGLRenderer({
@@ -27,36 +29,42 @@ const renderer = new THREE.WebGLRenderer({
 });
 
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.1;
 
 renderer.domElement.style.cssText =
   "position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;";
 
 document.body.appendChild(renderer.domElement);
 
-// LIGHTS
-scene.add(new THREE.HemisphereLight(0xe5f5ff, 0x637343, 2));
+/* LIGHTING */
+
+scene.add(
+  new THREE.HemisphereLight(0xe5f5ff, 0x596b3b, 2)
+);
 
 const sun = new THREE.DirectionalLight(0xffe7bd, 2.2);
-sun.position.set(-55, 90, 50);
+sun.position.set(-50, 90, 50);
 sun.castShadow = true;
 sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.camera.left = -120;
-sun.shadow.camera.right = 120;
-sun.shadow.camera.top = 120;
-sun.shadow.camera.bottom = -120;
+sun.shadow.camera.left = -110;
+sun.shadow.camera.right = 110;
+sun.shadow.camera.top = 110;
+sun.shadow.camera.bottom = -110;
 sun.shadow.camera.far = 250;
 scene.add(sun);
 
-// MATERIALS
+/* MATERIALS */
+
 function mat(color, roughness = 1, metalness = 0) {
   return new THREE.MeshStandardMaterial({
-    color, roughness, metalness
+    color,
+    roughness,
+    metalness
   });
 }
 
@@ -71,7 +79,7 @@ const M = {
   brick: mat(0xa95638),
   cream: mat(0xe2d0a9),
   white: mat(0xe9e8dc),
-  roof: mat(0x777e80, 0.75, 0.25),
+  roof: mat(0x777e80, 0.75, 0.2),
   redRoof: mat(0x984a34),
   wood: mat(0x69452b),
   darkWood: mat(0x39291d),
@@ -87,12 +95,19 @@ const M = {
   black: mat(0x252525)
 };
 
-// OBJECT HELPERS
-function addBox(x, y, z, sx, sy, sz, material, shadow = true) {
+/* OBJECT HELPERS */
+
+function addBox(
+  x, y, z,
+  sx, sy, sz,
+  material,
+  shadow = true
+) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(sx, sy, sz),
     material
   );
+
   mesh.position.set(x, y, z);
   mesh.castShadow = shadow;
   mesh.receiveShadow = true;
@@ -100,11 +115,17 @@ function addBox(x, y, z, sx, sy, sz, material, shadow = true) {
   return mesh;
 }
 
-function addCylinder(x, y, z, rt, rb, h, material, segments = 10) {
+function addCylinder(
+  x, y, z,
+  rt, rb, h,
+  material,
+  segments = 10
+) {
   const mesh = new THREE.Mesh(
     new THREE.CylinderGeometry(rt, rb, h, segments),
     material
   );
+
   mesh.position.set(x, y, z);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -112,10 +133,12 @@ function addCylinder(x, y, z, rt, rb, h, material, segments = 10) {
   return mesh;
 }
 
-// TERRAIN
+/* TERRAIN */
+
 addBox(0, -0.55, 0, 500, 1, 500, M.grass, false);
 
-// MAIN ROAD
+/* MAIN ROAD */
+
 addBox(0, 0, 0, 12, 0.14, 420, M.road, false);
 addBox(-6.5, 0.01, 0, 1, 0.12, 420, M.dirt, false);
 addBox(6.5, 0.01, 0, 1, 0.12, 420, M.dirt, false);
@@ -124,25 +147,49 @@ for (let z = -200; z < 210; z += 14) {
   addBox(0, 0.085, z, 0.15, 0.02, 4, M.white, false);
 }
 
-// VILLAGE SIDE ROADS
+/* VILLAGE ROADS */
+
 addBox(-38, 0, -35, 75, 0.13, 7, M.dirt, false);
 addBox(40, 0, 60, 75, 0.13, 7, M.dirt, false);
 addBox(-45, 0, 125, 65, 0.13, 6, M.dirt, false);
 addBox(38, 0, -125, 70, 0.13, 6, M.dirt, false);
 
-// FARM FIELDS
+/* FARM FIELDS — OPTIMIZED */
+
 function field(x, z, w, d, material) {
   addBox(x, 0, z, w, 0.12, d, material, false);
 
-  for (let px = -w / 2 + 2; px < w / 2 - 1; px += 2) {
-    for (let pz = -d / 2 + 2; pz < d / 2 - 1; pz += 3) {
-      const crop = addBox(
-        x + px, 0.42, z + pz,
-        0.14, 0.75, 0.14, M.crop, false
-      );
-      crop.rotation.z = (Math.random() - 0.5) * 0.2;
+  const columns = Math.floor((w - 4) / 4);
+  const rows = Math.floor((d - 4) / 5);
+  const count = columns * rows;
+
+  const cropGeometry = new THREE.BoxGeometry(
+    0.16, 0.65, 0.16
+  );
+
+  const crops = new THREE.InstancedMesh(
+    cropGeometry,
+    M.crop,
+    count
+  );
+
+  const dummy = new THREE.Object3D();
+  let index = 0;
+
+  for (let px = -w / 2 + 2; px < w / 2 - 1; px += 4) {
+    for (let pz = -d / 2 + 2; pz < d / 2 - 1; pz += 5) {
+      dummy.position.set(x + px, 0.38, z + pz);
+      dummy.rotation.z = (Math.random() - 0.5) * 0.15;
+      dummy.updateMatrix();
+      crops.setMatrixAt(index++, dummy.matrix);
     }
   }
+
+  crops.count = index;
+  crops.instanceMatrix.needsUpdate = true;
+  crops.castShadow = false;
+  crops.receiveShadow = false;
+  scene.add(crops);
 
   addBox(x, 0.1, z - d / 2, w, 0.2, 0.5, M.dirt, false);
   addBox(x, 0.1, z + d / 2, w, 0.2, 0.5, M.dirt, false);
@@ -157,7 +204,8 @@ field(83, 100, 100, 90, M.grass2);
 field(-75, 180, 90, 45, M.field);
 field(85, -185, 100, 40, M.grass2);
 
-// IRRIGATION CANALS
+/* IRRIGATION CANALS */
+
 function canal(x, z, width, length, rotation = 0) {
   const group = new THREE.Group();
 
@@ -165,6 +213,7 @@ function canal(x, z, width, length, rotation = 0) {
     new THREE.BoxGeometry(width, 0.1, length),
     M.water
   );
+
   water.position.y = 0.04;
   group.add(water);
 
@@ -173,6 +222,7 @@ function canal(x, z, width, length, rotation = 0) {
       new THREE.BoxGeometry(0.5, 0.3, length),
       M.dirt
     );
+
     bank.position.set(side * (width / 2 + 0.25), 0, 0);
     group.add(bank);
   }
@@ -186,12 +236,14 @@ canal(-125, 0, 2.2, 370);
 canal(130, 20, 2.2, 350);
 canal(0, -165, 2, 250, Math.PI / 2);
 
-// PONDS
+/* PONDS */
+
 function pond(x, z, rx, rz) {
   const water = new THREE.Mesh(
     new THREE.CircleGeometry(1, 40),
     M.water
   );
+
   water.rotation.x = -Math.PI / 2;
   water.scale.set(rx, rz, 1);
   water.position.set(x, 0.035, z);
@@ -201,6 +253,7 @@ function pond(x, z, rx, rz) {
     new THREE.RingGeometry(0.94, 1.12, 40),
     M.dirt
   );
+
   bank.rotation.x = -Math.PI / 2;
   bank.scale.set(rx, rz, 1);
   bank.position.set(x, 0.02, z);
@@ -210,7 +263,8 @@ function pond(x, z, rx, rz) {
 pond(-48, -20, 12, 8);
 pond(55, 145, 15, 10);
 
-// HOUSES
+/* HOUSES */
+
 function house(x, z, options = {}) {
   const w = options.w || 10;
   const d = options.d || 9;
@@ -225,6 +279,7 @@ function house(x, z, options = {}) {
       new THREE.BoxGeometry(sx, sy, sz),
       material
     );
+
     mesh.position.set(px, py, pz);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -257,6 +312,7 @@ function house(x, z, options = {}) {
       new THREE.CylinderGeometry(0.75, 0.75, 1.3, 14),
       M.blue
     );
+
     tank.position.set(w / 3, h + 1, -d / 4);
     group.add(tank);
   }
@@ -279,7 +335,8 @@ house(43, -65, { w: 8, d: 7, h: 3.2, wall: M.brick });
 house(-45, 55, { w: 8, d: 7, h: 3.2, wall: M.brick });
 house(45, 110, { w: 8, d: 7, h: 3.2, wall: M.brick });
 
-// TREES
+/* TREES */
+
 function tree(x, z, scale = 1) {
   addCylinder(
     x, 1.1 * scale, z,
@@ -290,7 +347,7 @@ function tree(x, z, scale = 1) {
   const group = new THREE.Group();
   group.position.set(x, 2.5 * scale, z);
 
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 4; i++) {
     const crown = new THREE.Mesh(
       new THREE.IcosahedronGeometry(0.9 * scale, 1),
       i % 2 ? M.leaves : M.leaves2
@@ -309,7 +366,7 @@ function tree(x, z, scale = 1) {
   scene.add(group);
 }
 
-for (let i = 0; i < 75; i++) {
+for (let i = 0; i < 65; i++) {
   const x = (Math.random() - 0.5) * 180;
   const z = (Math.random() - 0.5) * 220;
 
@@ -318,11 +375,12 @@ for (let i = 0; i < 75; i++) {
   }
 }
 
-// BANANA TREES
+/* BANANA TREES */
+
 function bananaTree(x, z) {
   addCylinder(x, 1.5, z, 0.16, 0.13, 3, M.green);
 
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 5; i++) {
     const leaf = new THREE.Mesh(
       new THREE.ConeGeometry(0.35, 3.5, 5),
       M.leaves
@@ -336,14 +394,15 @@ function bananaTree(x, z) {
   }
 }
 
-for (let i = 0; i < 18; i++) {
+for (let i = 0; i < 15; i++) {
   bananaTree(
     15 + Math.random() * 45,
     -90 + Math.random() * 180
   );
 }
 
-// ELECTRIC POLES
+/* ELECTRIC POLES */
+
 function electricPole(x, z) {
   addCylinder(x, 4, z, 0.17, 0.13, 8, M.concrete);
   addBox(x, 7.2, z, 2.8, 0.14, 0.14, M.wood);
@@ -381,7 +440,8 @@ for (let z = -100; z < 110; z += 35) {
   wire(7, z, 7, z + 35);
 }
 
-// TEA SHOP
+/* TEA SHOP */
+
 function teaShop(x, z) {
   addBox(x, 1.6, z, 8, 3.2, 6, M.brick);
   addBox(x, 3.3, z, 8.6, 0.25, 6.6, M.redRoof);
@@ -393,7 +453,8 @@ function teaShop(x, z) {
 
 teaShop(-17, 18);
 
-// SCHOOL
+/* SCHOOL */
+
 function school(x, z) {
   addBox(x, 2.25, z, 18, 4.5, 10, M.white);
   addBox(x, 4.6, z, 18.8, 0.35, 10.8, M.redRoof);
@@ -408,7 +469,8 @@ function school(x, z) {
 
 school(35, -30);
 
-// CHAUTARI
+/* CHAUTARI */
+
 function chautari(x, z) {
   addCylinder(x, 0.25, z, 1.7, 1.7, 0.45, M.concrete);
   tree(x, z, 1.4);
@@ -418,7 +480,8 @@ function chautari(x, z) {
 
 chautari(-27, -15);
 
-// HAND PUMPS
+/* HAND PUMPS */
+
 function handPump(x, z) {
   addBox(x, 0.8, z, 0.25, 1.6, 0.25, M.metal);
   addBox(x + 0.5, 1.5, z, 1.3, 0.12, 0.12, M.metal);
@@ -429,7 +492,8 @@ handPump(12, 15);
 handPump(-35, 35);
 handPump(40, 60);
 
-// YARDS
+/* YARDS */
+
 function yard(x, z) {
   addBox(x, 0.05, z, 6, 0.08, 5, M.sand, false);
   addBox(x - 3, 0.4, z, 0.12, 0.8, 5, M.wood);
@@ -441,66 +505,110 @@ yard(45, 110);
 yard(-40, -65);
 yard(25, 45);
 
-// PLAYER CHARACTER
+/* PLAYER */
+
 const player = new THREE.Group();
 scene.add(player);
 
 const skin = mat(0xc58d65);
 const shirt = mat(0x2466a6);
 const pants = mat(0x292c35);
+const eyeMaterial = mat(0x17120e);
+const whiteEye = mat(0xffffff);
 
 const body = new THREE.Mesh(
   new THREE.CapsuleGeometry(0.38, 0.85, 5, 8),
   shirt
 );
+
 body.position.y = 1.25;
 player.add(body);
 
 const head = new THREE.Mesh(
-  new THREE.SphereGeometry(0.3, 16, 16),
+  new THREE.SphereGeometry(0.3, 20, 16),
   skin
 );
+
 head.position.y = 2.15;
 player.add(head);
 
 const hair = new THREE.Mesh(
   new THREE.SphereGeometry(
-    0.31, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2
+    0.31, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2
   ),
   M.black
 );
+
 hair.position.y = 2.3;
 player.add(hair);
 
-const leftLeg = new THREE.Mesh(
-  new THREE.BoxGeometry(0.23, 0.65, 0.25),
-  pants
+/* FACE — FRONT IS LOCAL +Z */
+
+for (const eyeX of [-0.105, 0.105]) {
+  const eyeWhite = new THREE.Mesh(
+    new THREE.SphereGeometry(0.055, 10, 10),
+    whiteEye
+  );
+
+  eyeWhite.position.set(eyeX, 2.2, 0.265);
+  player.add(eyeWhite);
+
+  const pupil = new THREE.Mesh(
+    new THREE.SphereGeometry(0.027, 8, 8),
+    eyeMaterial
+  );
+
+  pupil.position.set(eyeX, 2.2, 0.31);
+  player.add(pupil);
+}
+
+const nose = new THREE.Mesh(
+  new THREE.SphereGeometry(0.045, 8, 8),
+  skin
 );
-leftLeg.position.set(-0.17, 0.35, 0);
-player.add(leftLeg);
 
-const rightLeg = leftLeg.clone();
-rightLeg.position.x = 0.17;
-player.add(rightLeg);
+nose.position.set(0, 2.12, 0.31);
+player.add(nose);
 
-const leftArm = new THREE.Mesh(
-  new THREE.BoxGeometry(0.2, 0.75, 0.22),
-  shirt
-);
-leftArm.position.set(-0.48, 1.25, 0);
-player.add(leftArm);
+/* LIMBS */
 
-const rightArm = leftArm.clone();
-rightArm.position.x = 0.48;
-player.add(rightArm);
+function createLimb(x, y, material, width, height, depth) {
+  const pivot = new THREE.Group();
+  pivot.position.set(x, y, 0);
 
-// Start facing toward -Z.
-// Camera starts behind the character at +Z.
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, depth),
+    material
+  );
+
+  mesh.position.y = -height / 2;
+  pivot.add(mesh);
+  player.add(pivot);
+
+  return pivot;
+}
+
+const leftLeg = createLimb(-0.17, 0.68, pants, 0.23, 0.65, 0.25);
+const rightLeg = createLimb(0.17, 0.68, pants, 0.23, 0.65, 0.25);
+
+const leftArm = createLimb(-0.48, 1.6, shirt, 0.2, 0.75, 0.22);
+const rightArm = createLimb(0.48, 1.6, shirt, 0.2, 0.75, 0.22);
+
+/*
+  THREE CHARACTER DIRECTION RULE:
+
+  Local +Z = character front.
+  Initial heading PI = world -Z.
+  Camera stays behind the character.
+*/
+
 player.position.set(0, 0, 0);
+
 let playerRotation = Math.PI;
 player.rotation.y = playerRotation;
 
-// VILLAGERS
+/* VILLAGERS */
+
 const villagers = [];
 
 function createVillager(x, z, color) {
@@ -510,6 +618,7 @@ function createVillager(x, z, color) {
     new THREE.CapsuleGeometry(0.32, 0.75, 4, 8),
     mat(color)
   );
+
   torso.position.y = 1.2;
   npc.add(torso);
 
@@ -517,6 +626,7 @@ function createVillager(x, z, color) {
     new THREE.SphereGeometry(0.25, 12, 12),
     skin
   );
+
   face.position.y = 2;
   npc.add(face);
 
@@ -524,6 +634,7 @@ function createVillager(x, z, color) {
     new THREE.BoxGeometry(0.2, 0.65, 0.2),
     pants
   );
+
   leg.position.set(-0.13, 0.35, 0);
   npc.add(leg);
 
@@ -546,8 +657,9 @@ createVillager(30, -20, 0xd4a23d);
 createVillager(-30, -25, 0x7d4aa0);
 createVillager(45, 65, 0x3b8295);
 
-// SHRUBS
-for (let i = 0; i < 80; i++) {
+/* SHRUBS */
+
+for (let i = 0; i < 65; i++) {
   const shrub = new THREE.Mesh(
     new THREE.IcosahedronGeometry(0.5, 1),
     M.leaves
@@ -563,21 +675,22 @@ for (let i = 0; i < 80; i++) {
   scene.add(shrub);
 }
 
-// MOBILE CONTROLS
+/* MOBILE CONTROLS */
+
 const style = document.createElement("style");
 
 style.textContent = `
 #mobile-controls {
   position:fixed;
   inset:0;
-  z-index:10;
+  z-index:20;
   pointer-events:none;
   font-family:Arial,sans-serif;
 }
 #joystick {
   position:absolute;
   left:25px;
-  bottom:30px;
+  bottom:25px;
   width:125px;
   height:125px;
   border-radius:50%;
@@ -593,19 +706,19 @@ style.textContent = `
   width:52px;
   height:52px;
   border-radius:50%;
-  background:#ffffffdd;
+  background:#ffffffed;
   box-shadow:0 3px 12px #3338;
   pointer-events:none;
 }
 #jump {
   position:absolute;
   right:28px;
-  bottom:45px;
+  bottom:38px;
   width:78px;
   height:78px;
   border-radius:50%;
   border:2px solid white;
-  background:#246dccdd;
+  background:#246dcc;
   color:white;
   font-size:15px;
   font-weight:bold;
@@ -626,10 +739,11 @@ document.head.appendChild(style);
 
 const controls = document.createElement("div");
 controls.id = "mobile-controls";
+
 controls.innerHTML = `
   <div id="game-label">NAYABASTI • FREE ROAM</div>
   <div id="joystick"><div id="stick"></div></div>
-  <button id="jump">JUMP</button>
+  <button id="jump" type="button">JUMP</button>
 `;
 
 document.body.appendChild(controls);
@@ -656,11 +770,11 @@ function updateJoystick(e) {
   const distance = Math.hypot(dx, dy);
 
   if (distance > max) {
-    dx = dx / distance * max;
-    dy = dy / distance * max;
+    dx = (dx / distance) * max;
+    dy = (dy / distance) * max;
   }
 
-  stick.style.transform = `translate(${dx}px,${dy}px)`;
+  stick.style.transform = `translate(${dx}px, ${dy}px)`;
 
   moveX = dx / max;
   moveY = dy / max;
@@ -668,6 +782,7 @@ function updateJoystick(e) {
 
 joystick.addEventListener("pointerdown", e => {
   e.preventDefault();
+
   pointerId = e.pointerId;
   joystick.setPointerCapture(pointerId);
   updateJoystick(e);
@@ -675,6 +790,7 @@ joystick.addEventListener("pointerdown", e => {
 
 joystick.addEventListener("pointermove", e => {
   if (e.pointerId === pointerId) {
+    e.preventDefault();
     updateJoystick(e);
   }
 });
@@ -690,8 +806,15 @@ function releaseJoystick(e) {
 
 joystick.addEventListener("pointerup", releaseJoystick);
 joystick.addEventListener("pointercancel", releaseJoystick);
+joystick.addEventListener("lostpointercapture", () => {
+  pointerId = null;
+  moveX = 0;
+  moveY = 0;
+  stick.style.transform = "translate(0,0)";
+});
 
-// JUMP
+/* JUMP */
+
 jumpButton.addEventListener("pointerdown", e => {
   e.preventDefault();
 
@@ -701,7 +824,8 @@ jumpButton.addEventListener("pointerdown", e => {
   }
 });
 
-// KEYBOARD
+/* KEYBOARD */
+
 const keys = {};
 
 window.addEventListener("keydown", e => {
@@ -712,18 +836,46 @@ window.addEventListener("keyup", e => {
   keys[e.key.toLowerCase()] = false;
 });
 
-// CAMERA
+/* CAMERA */
+
 const clock = new THREE.Clock();
+
 let walkTime = 0;
 
-camera.position.set(0, 6, 10);
-camera.lookAt(0, 1, 0);
+const UP = new THREE.Vector3(0, 1, 0);
 
-// REMOVE OLD LOADING SCREEN
+function getForward(rotation) {
+  return new THREE.Vector3(0, 0, 1)
+    .applyAxisAngle(UP, rotation)
+    .normalize();
+}
+
+function getRight(rotation) {
+  return new THREE.Vector3(1, 0, 0)
+    .applyAxisAngle(UP, rotation)
+    .normalize();
+}
+
+const initialForward = getForward(playerRotation);
+
+camera.position.set(
+  -initialForward.x * 8.5,
+  7,
+  -initialForward.z * 8.5
+);
+
+camera.lookAt(0, 1.2, 0);
+
+/* REMOVE LOADING */
+
 const loading = document.getElementById("loading");
-if (loading) loading.remove();
 
-// GAME LOOP
+if (loading) {
+  loading.remove();
+}
+
+/* GAME LOOP */
+
 function animate() {
   requestAnimationFrame(animate);
 
@@ -733,7 +885,8 @@ function animate() {
   let horizontal = moveX;
   let vertical = moveY;
 
-  // Keyboard movement
+  /* KEYBOARD INPUT */
+
   if (keys["w"] || keys["arrowup"]) vertical = -1;
   if (keys["s"] || keys["arrowdown"]) vertical = 1;
   if (keys["a"] || keys["arrowleft"]) horizontal = -1;
@@ -745,37 +898,51 @@ function animate() {
     horizontal /= Math.max(1, inputLength);
     vertical /= Math.max(1, inputLength);
 
-    // Camera-relative directions
-    const forward = new THREE.Vector3(
-      Math.sin(playerRotation),
-      0,
-      Math.cos(playerRotation)
+    /*
+      JOYSTICK DIRECTION:
+
+      moveY < 0 = joystick UP
+      moveY > 0 = joystick DOWN
+
+      Character local +Z = forward.
+      Therefore forward movement = -vertical.
+    */
+
+    const forward = getForward(playerRotation);
+    const right = getRight(playerRotation);
+
+    const direction = new THREE.Vector3();
+
+    direction.addScaledVector(right, horizontal);
+    direction.addScaledVector(forward, -vertical);
+
+    direction.normalize();
+
+    /* MOVEMENT */
+
+    const speed = 6.5;
+
+    player.position.addScaledVector(
+      direction,
+      speed * delta
     );
 
-    const right = new THREE.Vector3(
-      Math.cos(playerRotation),
-      0,
-      -Math.sin(playerRotation)
+    /* FACE THE MOVEMENT DIRECTION */
+
+    playerRotation = Math.atan2(
+      direction.x,
+      direction.z
     );
 
-    const direction = new THREE.Vector3()
-      .addScaledVector(right, horizontal)
-      .addScaledVector(forward, -vertical)
-      .normalize();
-
-    // Move character
-    const speed = 7;
-    player.position.addScaledVector(direction, speed * delta);
-
-    // Face movement direction
-    playerRotation = Math.atan2(direction.x, direction.z);
     player.rotation.y = playerRotation;
 
-    // Walking animation
+    /* WALK ANIMATION */
+
     walkTime += delta * 10;
 
     leftLeg.rotation.x = Math.sin(walkTime) * 0.55;
     rightLeg.rotation.x = -Math.sin(walkTime) * 0.55;
+
     leftArm.rotation.x = -Math.sin(walkTime) * 0.4;
     rightArm.rotation.x = Math.sin(walkTime) * 0.4;
 
@@ -786,7 +953,8 @@ function animate() {
     rightArm.rotation.x *= 0.8;
   }
 
-  // JUMP PHYSICS
+  /* JUMP PHYSICS */
+
   if (jumping) {
     playerHeight += jumpVelocity * delta;
     jumpVelocity -= 16 * delta;
@@ -800,34 +968,43 @@ function animate() {
 
   player.position.y = playerHeight;
 
-  // CAMERA FOLLOW
+  /* CAMERA FOLLOW — LOWER VIEW, LESS SKY */
+
+  const forward = getForward(playerRotation);
+
   const desiredCamera = new THREE.Vector3(
-    player.position.x - Math.sin(playerRotation) * 10,
-    player.position.y + 6,
-    player.position.z - Math.cos(playerRotation) * 10
+    player.position.x - forward.x * 8.5,
+    player.position.y + 7,
+    player.position.z - forward.z * 8.5
   );
 
   camera.position.lerp(
     desiredCamera,
-    1 - Math.pow(0.001, delta)
+    1 - Math.exp(-6 * delta)
   );
 
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.3,
+    player.position.y + 1.2,
     player.position.z
   );
 
-  // WORLD BOUNDARY
+  /* WORLD BOUNDARY */
+
   player.position.x = THREE.MathUtils.clamp(
-    player.position.x, -85, 85
+    player.position.x,
+    -85,
+    85
   );
 
   player.position.z = THREE.MathUtils.clamp(
-    player.position.z, -115, 115
+    player.position.z,
+    -115,
+    115
   );
 
-  // NPC ANIMATION
+  /* NPC ANIMATION */
+
   villagers.forEach(v => {
     v.mesh.position.y =
       Math.sin(elapsed * 2 + v.phase) * 0.025;
@@ -839,13 +1016,16 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// RESIZE
+/* RESIZE */
+
 window.addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
+
   renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 });
 
-// START
+/* START GAME */
+
 animate();
