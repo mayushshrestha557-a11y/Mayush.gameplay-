@@ -1,12 +1,11 @@
-
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 
 /* =====================================================
-   MAYUSH GAMEPLAY — NAYABASTI TERAI
-   Existing village layout + real external 3D assets
-   Mobile / iPhone Safari
+   MAYUSH GAMEPLAY — NAYABASTI
+   Real local GLB assets | Mobile controls
+   No cartoon fallback
 ===================================================== */
 
 document.documentElement.style.cssText =
@@ -39,7 +38,7 @@ renderer.domElement.style.cssText =
   "position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none";
 document.body.appendChild(renderer.domElement);
 
-/* LOADING / ERROR SCREEN */
+/* LOADING SCREEN */
 
 const loading = document.createElement("div");
 loading.style.cssText = `
@@ -51,12 +50,12 @@ flex-direction:column;font:14px Arial;gap:14px;padding:25px;text-align:center
 loading.innerHTML = `
 <div style="font-size:30px;font-weight:900;letter-spacing:4px">MAYUSH</div>
 <div id="loadtext">LOADING REAL 3D ASSETS...</div>
-<div style="width:220px;height:6px;background:#4b554e;border-radius:8px;overflow:hidden">
-<div id="loadbar" style="width:3%;height:6px;background:#d8b46d"></div>
+<div style="width:230px;height:7px;background:#4b554e;border-radius:8px;overflow:hidden">
+  <div id="loadbar" style="width:2%;height:7px;background:#d8b46d"></div>
 </div>
-<div id="loaderror" style="max-width:300px;line-height:1.5;color:#ffb6a7"></div>
+<div id="loaderror" style="max-width:310px;line-height:1.5;color:#ffb6a7"></div>
 <button id="retry" style="display:none;padding:12px 28px;border:0;border-radius:8px;background:#d8b46d;color:#171717;font-weight:bold">
-RETRY ASSET DOWNLOAD
+  RETRY DOWNLOAD
 </button>
 `;
 
@@ -67,15 +66,15 @@ const loadBar = document.getElementById("loadbar");
 const loadError = document.getElementById("loaderror");
 const retryButton = document.getElementById("retry");
 
-function status(text, progress) {
-  loadText.textContent = text;
+function status(message, progress) {
+  loadText.textContent = message;
   loadBar.style.width = progress + "%";
 }
 
 function showAssetError(error) {
-  loadText.textContent = "3D ASSET DOWNLOAD FAILED";
+  loadText.textContent = "REAL 3D ASSET LOAD FAILED";
   loadError.textContent =
-    "Internet connection or model server problem. Cartoon fallback is disabled. " +
+    "Required model load हुन सकेन। Internet र assets file path जाँच्नुहोस्। " +
     String(error?.message || error);
   loadBar.style.width = "0%";
   retryButton.style.display = "block";
@@ -83,7 +82,7 @@ function showAssetError(error) {
 
 let gameStarted = false;
 
-/* LIGHTING */
+/* LIGHTS */
 
 scene.add(new THREE.HemisphereLight(0xe3edff, 0x62533c, 1.5));
 
@@ -125,25 +124,24 @@ const M = {
 };
 
 function addMesh(parent, geometry, material, x = 0, y = 0, z = 0) {
-  const o = new THREE.Mesh(geometry, material);
-  o.position.set(x, y, z);
-  o.castShadow = true;
-  o.receiveShadow = true;
-  parent.add(o);
-  return o;
+  const object = new THREE.Mesh(geometry, material);
+  object.position.set(x, y, z);
+  object.castShadow = true;
+  object.receiveShadow = true;
+  parent.add(object);
+  return object;
 }
 
 function addBox(parent, x, y, z, sx, sy, sz, material) {
   return addMesh(
-    parent,
-    new THREE.BoxGeometry(sx, sy, sz),
+    parent, new THREE.BoxGeometry(sx, sy, sz),
     material, x, y, z
   );
 }
 
-/* TEXTURES */
+/* GROUND TEXTURE */
 
-function makeNoiseTexture(base, colors, amount = 7000) {
+function makeNoiseTexture(base, colors, amount = 6500) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 512;
   const ctx = canvas.getContext("2d");
@@ -154,11 +152,13 @@ function makeNoiseTexture(base, colors, amount = 7000) {
   for (let i = 0; i < amount; i++) {
     ctx.globalAlpha = 0.08 + Math.random() * 0.25;
     ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-    const x = Math.random() * 512;
-    const y = Math.random() * 512;
-    const r = 0.4 + Math.random() * 2.4;
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.arc(
+      Math.random() * 512,
+      Math.random() * 512,
+      0.4 + Math.random() * 2.4,
+      0, Math.PI * 2
+    );
     ctx.fill();
   }
 
@@ -169,61 +169,28 @@ function makeNoiseTexture(base, colors, amount = 7000) {
   return texture;
 }
 
-const grassTex = makeNoiseTexture("#617b42", [
+const grassTexture = makeNoiseTexture("#617b42", [
   "#a1a65e", "#405c30", "#788b49", "#b1a36a"
 ]);
-grassTex.repeat.set(35, 35);
-M.grass.map = grassTex;
+grassTexture.repeat.set(35, 35);
+M.grass.map = grassTexture;
 M.grass.needsUpdate = true;
 
-const dirtTex = makeNoiseTexture("#826044", [
+const dirtTexture = makeNoiseTexture("#826044", [
   "#b18b5d", "#65452e", "#9c7953", "#c1a078"
 ]);
-dirtTex.repeat.set(2, 42);
-M.road.map = dirtTex;
+dirtTexture.repeat.set(2, 42);
+M.road.map = dirtTexture;
 M.road.color.set(0xffffff);
 M.road.needsUpdate = true;
 
-/* GROUND */
+/* TERRAIN */
 
 const ground = addMesh(
-  scene, new THREE.PlaneGeometry(600, 600), M.grass,
-  0, -0.12, 0
+  scene, new THREE.PlaneGeometry(600, 600),
+  M.grass, 0, -0.12, 0
 );
 ground.rotation.x = -Math.PI / 2;
-
-/* GRASS */
-
-{
-  const geo = new THREE.PlaneGeometry(0.13, 0.58);
-  geo.translate(0, 0.28, 0);
-
-  const grassMat = new THREE.MeshStandardMaterial({
-    color: 0x91a65c,
-    side: THREE.DoubleSide,
-    roughness: 1
-  });
-
-  const grass = new THREE.InstancedMesh(geo, grassMat, 2600);
-  const dummy = new THREE.Object3D();
-  let count = 0;
-
-  for (let i = 0; i < 3600 && count < 2600; i++) {
-    const x = (Math.random() - 0.5) * 500;
-    const z = (Math.random() - 0.5) * 500;
-    if (Math.abs(x) < 7) continue;
-
-    dummy.position.set(x, 0.01, z);
-    dummy.rotation.y = Math.random() * Math.PI;
-    dummy.scale.set(0.5 + Math.random(), 0.5 + Math.random(), 1);
-    dummy.updateMatrix();
-    grass.setMatrixAt(count++, dummy.matrix);
-  }
-
-  grass.count = count;
-  grass.instanceMatrix.needsUpdate = true;
-  scene.add(grass);
-}
 
 /* MAIN DIRT ROAD */
 
@@ -235,36 +202,6 @@ for (const x of [-2.65, 2.65]) {
     M.rut, x, 0.055, 0
   );
   rut.rotation.x = -Math.PI / 2;
-}
-
-addBox(scene, -6.5, -0.005, 0, 1.2, 0.1, 440, M.dirt);
-addBox(scene, 6.5, -0.005, 0, 1.2, 0.1, 440, M.dirt);
-
-/* ROAD STONES */
-
-{
-  const geo = new THREE.DodecahedronGeometry(0.13, 0);
-  const stones = new THREE.InstancedMesh(
-    geo, M.stone, 380
-  );
-  const d = new THREE.Object3D();
-
-  for (let i = 0; i < 380; i++) {
-    d.position.set(
-      (Math.random() - 0.5) * 10,
-      0.12,
-      (Math.random() - 0.5) * 420
-    );
-    d.scale.set(
-      0.3 + Math.random(),
-      0.2 + Math.random() * 0.5,
-      0.3 + Math.random()
-    );
-    d.rotation.set(Math.random(), Math.random(), Math.random());
-    d.updateMatrix();
-    stones.setMatrixAt(i, d.matrix);
-  }
-  scene.add(stones);
 }
 
 /* CONNECTING ROADS */
@@ -279,19 +216,21 @@ addBox(scene, 38, 0.005, -125, 75, 0.09, 6, M.road);
 function makeField(x, z, width, depth) {
   addBox(scene, x, 0.005, z, width, 0.08, depth, M.field);
 
-  const cropMat = mat(0x92954a);
-  const cropGeo = new THREE.ConeGeometry(0.12, 0.75, 5);
+  const cropMaterial = mat(0x92954a);
+  const cropGeometry = new THREE.ConeGeometry(0.12, 0.75, 5);
   const total = Math.floor(width / 3) * Math.floor(depth / 4);
-  const crops = new THREE.InstancedMesh(cropGeo, cropMat, total);
-  const d = new THREE.Object3D();
+  const crops = new THREE.InstancedMesh(
+    cropGeometry, cropMaterial, total
+  );
+  const dummy = new THREE.Object3D();
   let index = 0;
 
   for (let px = -width / 2 + 2; px < width / 2 - 1; px += 3) {
     for (let pz = -depth / 2 + 2; pz < depth / 2 - 1; pz += 4) {
-      d.position.set(x + px, 0.38, z + pz);
-      d.rotation.y = Math.random();
-      d.updateMatrix();
-      crops.setMatrixAt(index++, d.matrix);
+      dummy.position.set(x + px, 0.38, z + pz);
+      dummy.rotation.y = Math.random();
+      dummy.updateMatrix();
+      crops.setMatrixAt(index++, dummy.matrix);
     }
   }
 
@@ -308,7 +247,7 @@ makeField(-75, 180, 90, 45);
 
 /* CANALS AND PONDS */
 
-function canal(x, z, width, length, rotation = 0) {
+function makeCanal(x, z, width, length, rotation = 0) {
   const group = new THREE.Group();
 
   addBox(group, 0, 0.02, 0, width, 0.12, length, M.water);
@@ -325,82 +264,68 @@ function canal(x, z, width, length, rotation = 0) {
   scene.add(group);
 }
 
-canal(-125, 0, 2.5, 360);
-canal(130, 20, 2.5, 350);
-canal(0, -165, 2.2, 250, Math.PI / 2);
+makeCanal(-125, 0, 2.5, 360);
+makeCanal(130, 20, 2.5, 350);
+makeCanal(0, -165, 2.2, 250, Math.PI / 2);
 
-function pond(x, z, rx, rz) {
-  const p = addMesh(
+function makePond(x, z, rx, rz) {
+  const pond = addMesh(
     scene, new THREE.CircleGeometry(1, 48),
     M.water, x, 0.03, z
   );
-  p.rotation.x = -Math.PI / 2;
-  p.scale.set(rx, rz, 1);
+  pond.rotation.x = -Math.PI / 2;
+  pond.scale.set(rx, rz, 1);
 }
 
-pond(-48, -20, 12, 8);
-pond(55, 145, 15, 10);
+makePond(-48, -20, 12, 8);
+makePond(55, 145, 15, 10);
 
-/* HOUSES */
+/* VILLAGE HOUSES */
 
-const plasterMat = mat(0xbca989);
-const plasterDark = mat(0x927d62);
-const roofMat = mat(0x554238);
-const woodMat = mat(0x493528);
-const glassMat = new THREE.MeshPhysicalMaterial({
-  color: 0x536c70,
-  roughness: 0.18,
-  metalness: 0.1,
-  transmission: 0.1
-});
+const plaster = mat(0xbca989);
+const darkPlaster = mat(0x927d62);
+const roofMaterial = mat(0x554238);
+const wood = mat(0x493528);
 
 function makeHouse(x, z, variant = 0) {
-  const h = new THREE.Group();
-  const wall = variant ? plasterDark : plasterMat;
+  const house = new THREE.Group();
+  const wall = variant ? darkPlaster : plaster;
 
-  // Main building
-  addBox(h, 0, 2, 0, 10, 4, 8, wall);
+  addBox(house, 0, 2, 0, 10, 4, 8, wall);
 
-  // Roof panels
-  const roofLeft = addMesh(
-    h, new THREE.BoxGeometry(5.8, 0.22, 9),
-    roofMat, -2.55, 4.25, 0
+  const leftRoof = addMesh(
+    house, new THREE.BoxGeometry(5.8, 0.22, 9),
+    roofMaterial, -2.55, 4.25, 0
   );
-  roofLeft.rotation.z = -0.35;
+  leftRoof.rotation.z = -0.35;
 
-  const roofRight = addMesh(
-    h, new THREE.BoxGeometry(5.8, 0.22, 9),
-    roofMat, 2.55, 4.25, 0
+  const rightRoof = addMesh(
+    house, new THREE.BoxGeometry(5.8, 0.22, 9),
+    roofMaterial, 2.55, 4.25, 0
   );
-  roofRight.rotation.z = 0.35;
+  rightRoof.rotation.z = 0.35;
 
-  // Roof edges
-  addBox(h, 0, 4.22, 4.52, 11, 0.18, 0.16, woodMat);
-  addBox(h, 0, 4.22, -4.52, 11, 0.18, 0.16, woodMat);
+  addBox(house, 0, 4.22, 4.52, 11, 0.18, 0.16, wood);
+  addBox(house, 0, 4.22, -4.52, 11, 0.18, 0.16, wood);
+  addBox(house, 0, 1.05, 4.06, 1.45, 2.1, 0.13, wood);
 
-  // Door and frame
-  addBox(h, 0, 1.05, 4.06, 1.45, 2.1, 0.13, woodMat);
-  addBox(h, 0.82, 1.05, 4.08, 0.08, 2.2, 0.16, plasterDark);
-
-  // Windows
   for (const side of [-1, 1]) {
-    addBox(h, side * 2.7, 2.55, 4.1, 1.35, 1.1, 0.12, glassMat);
-    addBox(h, side * 2.7, 2.55, 4.18, 0.07, 1.2, 0.08, woodMat);
-    addBox(h, side * 2.7, 2.55, 4.18, 1.45, 0.07, 0.08, woodMat);
+    addBox(house, side * 2.7, 2.55, 4.1, 1.35, 1.1, 0.12, M.stone);
+    addBox(house, side * 2.7, 2.55, 4.18, 0.07, 1.2, 0.08, wood);
+    addBox(house, side * 2.7, 2.55, 4.18, 1.45, 0.07, 0.08, wood);
   }
 
-  // Veranda
-  addBox(h, 0, 0.18, 5.2, 12, 0.25, 2.8, plasterDark);
+  addBox(house, 0, 0.18, 5.2, 12, 0.25, 2.8, darkPlaster);
 
   for (const side of [-1, 1]) {
     addMesh(
-      h, new THREE.CylinderGeometry(0.12, 0.15, 3.5, 12),
-      woodMat, side * 5, 1.85, 5.7
+      house, new THREE.CylinderGeometry(0.12, 0.15, 3.5, 12),
+      wood, side * 5, 1.85, 5.7
     );
   }
 
-  h.position.set(x, 0, z);
-  scene.add(h);
+  house.position.set(x, 0, z);
+  scene.add(house);
 }
 
 const housePositions = [
@@ -410,348 +335,26 @@ const housePositions = [
   [45,110,1]
 ];
 
-for (const p of housePositions) makeHouse(...p);
-
-/* TREES */
-
-const barkMat = mat(0x49382b);
-const leafMaterials = [
-  mat(0x304b2c),
-  mat(0x3c5b32),
-  mat(0x526b39),
-  mat(0x637542)
-];
-
-function makeTree(x, z, scale = 1) {
-  const tree = new THREE.Group();
-
-  addMesh(
-    tree,
-    new THREE.CylinderGeometry(0.2, 0.38, 4.5, 12),
-    barkMat, 0, 2.25, 0
-  );
-
-  for (let i = 0; i < 28; i++) {
-    const angle = i * 2.399;
-    const radius = 0.5 + Math.random() * 1.3;
-    const size = 0.7 + Math.random() * 0.85;
-
-    const crown = addMesh(
-      tree,
-      new THREE.SphereGeometry(size, 12, 10),
-      leafMaterials[i % leafMaterials.length],
-      Math.cos(angle) * radius,
-      3.5 + Math.random() * 2.0,
-      Math.sin(angle) * radius
-    );
-
-    crown.scale.set(
-      1.15 + Math.random() * 0.3,
-      0.8 + Math.random() * 0.35,
-      1.1 + Math.random() * 0.3
-    );
-  }
-
-  tree.scale.setScalar(scale);
-  tree.position.set(x, 0, z);
-  scene.add(tree);
+for (const position of housePositions) {
+  makeHouse(...position);
 }
 
-for (let i = 0; i < 85; i++) {
-  const x = (Math.random() - 0.5) * 210;
-  const z = (Math.random() - 0.5) * 270;
-  if (Math.abs(x) > 10) makeTree(x, z, 0.8 + Math.random() * 0.8);
-}
-
-/* BANANA PLANTS */
-
-function bananaTree(x, z) {
-  const group = new THREE.Group();
-  const stem = mat(0x79603b);
-
-  addMesh(
-    group, new THREE.CylinderGeometry(0.15, 0.22, 2.5, 12),
-    stem, 0, 1.25, 0
-  );
-
-  for (let i = 0; i < 8; i++) {
-    const leaf = addMesh(
-      group,
-      new THREE.SphereGeometry(1, 14, 10),
-      leafMaterials[i % leafMaterials.length],
-      0, 2.55, 0
-    );
-    leaf.scale.set(0.35, 0.12, 1.9);
-    leaf.rotation.y = i * 0.8;
-    leaf.rotation.x = 0.25;
-  }
-
-  group.position.set(x, 0, z);
-  scene.add(group);
-}
-
-for (let i = 0; i < 20; i++) {
-  bananaTree(
-    (Math.random() - 0.5) * 100,
-    (Math.random() - 0.5) * 260
-  );
-}
-
-/* EXTERNAL REAL 3D ASSETS */
-
-const loader = new GLTFLoader();
-
-const ASSETS = {
-  person: "https://models.vinish.dev/people/casual-man.glb",
-  cow: "https://vinish-models.pages.dev/farm-animals/dairy-cow.glb",
-  bull: "https://vinish-models.pages.dev/farm-animals/bull.glb",
-  goat: "https://vinish-models.pages.dev/farm-animals/goat.glb",
-  tractor: "https://tevy.dev/models/farm-tractor/v1/lod0.glb",
-  car: "https://models.vinish.dev/realistic-cars/executive-sedan.glb",
-  motorcycle: "https://models.vinish.dev/motorcycles/street-motorcycle.glb"
-};
-
-let assetLibrary = {};
-
-async function loadAssets() {
-  const entries = Object.entries(ASSETS);
-  const loaded = {};
-
-  for (let i = 0; i < entries.length; i++) {
-    const [name, url] = entries[i];
-
-    status("DOWNLOADING " + name.toUpperCase() + "...", 5 + i * 12);
-
-    const gltf = await loader.loadAsync(url);
-
-    if (!gltf || !gltf.scene) {
-      throw new Error("Model file is empty: " + name);
-    }
-
-    gltf.scene.traverse(object => {
-      if (object.isMesh) {
-        object.castShadow = true;
-        object.receiveShadow = true;
-
-        if (object.material) {
-          const materials = Array.isArray(object.material)
-            ? object.material : [object.material];
-
-          for (const m of materials) {
-            if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
-          }
-        }
-      }
-    });
-
-    loaded[name] = gltf;
-  }
-
-  assetLibrary = loaded;
-}
-
-/* MODEL HELPERS */
-
-function cloneModel(name) {
-  const original = assetLibrary[name];
-  if (!original) throw new Error("Missing loaded model: " + name);
-
-  return SkeletonUtils.clone(original.scene);
-}
-
-function fitModel(model, targetHeight) {
-  model.updateMatrixWorld(true);
-
-  const box = new THREE.Box3().setFromObject(model);
-  const size = new THREE.Vector3();
-  box.getSize(size);
-
-  if (!Number.isFinite(size.y) || size.y <= 0) {
-    throw new Error("Invalid model dimensions");
-  }
-
-  model.scale.multiplyScalar(targetHeight / size.y);
-  model.updateMatrixWorld(true);
-
-  const fittedBox = new THREE.Box3().setFromObject(model);
-  model.position.y -= fittedBox.min.y;
-
-  return model;
-}
-
-function makeAnimatedActor(name, targetHeight, position, rotation = 0) {
-  const model = cloneModel(name);
-  fitModel(model, targetHeight);
-
-  const root = new THREE.Group();
-  root.add(model);
-  root.position.set(position.x, position.y || 0, position.z);
-  root.rotation.y = rotation;
-  scene.add(root);
-
-  const clips = assetLibrary[name].animations || [];
-  const mixer = new THREE.AnimationMixer(model);
-
-  const findClip = wanted => clips.find(
-    clip => clip.name.toLowerCase() === wanted.toLowerCase()
-  );
-
-  const actions = {};
-
-  for (const wanted of ["Idle", "Walk", "Run", "Trot", "Graze"]) {
-    const clip = findClip(wanted);
-    if (clip) actions[wanted] = mixer.clipAction(clip);
-  }
-
-  const initial = actions.Idle || actions.Walk || Object.values(actions)[0];
-  if (initial) initial.play();
-
-  return {
-    root,
-    model,
-    mixer,
-    actions,
-    current: initial || null,
-    changeAnimation(name) {
-      const next = actions[name] || actions.Idle || actions.Walk;
-      if (!next || next === this.current) return;
-
-      next.reset();
-      next.enabled = true;
-      next.setEffectiveWeight(1);
-      next.play();
-
-      if (this.current) this.current.crossFadeTo(next, 0.25, true);
-      this.current = next;
-    }
-  };
-}
-
-function makeStaticVehicle(name, targetLength, position, rotation = 0) {
-  const model = cloneModel(name);
-  model.updateMatrixWorld(true);
-
-  const bounds = new THREE.Box3().setFromObject(model);
-  const size = new THREE.Vector3();
-  bounds.getSize(size);
-
-  const longest = Math.max(size.x, size.z);
-  if (!Number.isFinite(longest) || longest <= 0) {
-    throw new Error("Invalid vehicle model: " + name);
-  }
-
-  model.scale.multiplyScalar(targetLength / longest);
-  model.updateMatrixWorld(true);
-
-  const fitted = new THREE.Box3().setFromObject(model);
-  model.position.y -= fitted.min.y;
-
-  const root = new THREE.Group();
-  root.add(model);
-  root.position.set(position.x, 0, position.z);
-  root.rotation.y = rotation;
-  scene.add(root);
-
-  return root;
-}
-
-/* PLAYER AND VILLAGERS */
-
-let playerActor;
-const villagers = [];
-
-function createPeople() {
-  playerActor = makeAnimatedActor(
-    "person", 1.75,
-    { x: 0, y: 0, z: 0 }
-  );
-
-  const positions = [
-    [8,15], [-12,30], [30,-20], [-30,-25],
-    [45,65], [-42,12], [18,92], [-18,-115]
-  ];
-
-  for (const [x, z] of positions) {
-    const actor = makeAnimatedActor(
-      "person", 1.68,
-      { x, y: 0, z }
-    );
-    villagers.push({
-      actor,
-      phase: Math.random() * 10
-    });
-  }
-}
-
-/* TRAFFIC */
-
-const traffic = [];
-
-function createVehicles() {
-  const tractor = makeStaticVehicle(
-    "tractor", 4.4, { x: -2.5, z: -155 }, Math.PI
-  );
-  traffic.push({ mesh: tractor, speed: 3.2 });
-
-  const car = makeStaticVehicle(
-    "car", 5.0, { x: 2.5, z: -105 }, 0
-  );
-  traffic.push({ mesh: car, speed: -7 });
-
-  const bike1 = makeStaticVehicle(
-    "motorcycle", 2.1, { x: 2.5, z: 145 }, 0
-  );
-  traffic.push({ mesh: bike1, speed: -5.5 });
-
-  const bike2 = makeStaticVehicle(
-    "motorcycle", 2.1, { x: -2.5, z: -65 }, Math.PI
-  );
-  traffic.push({ mesh: bike2, speed: 5.5 });
-}
-
-/* FARM ANIMALS */
-
-const animals = [];
-
-function createAnimal(type, x, z, height) {
-  const actor = makeAnimatedActor(
-    type, height, { x, y: 0, z }
-  );
-
-  animals.push({
-    actor,
-    phase: Math.random() * 8
-  });
-}
-
-function createAnimals() {
-  createAnimal("cow", -17, -77, 1.45);
-  createAnimal("cow", 31, -94, 1.4);
-
-  // Bull model is used as the large cattle animal.
-  createAnimal("bull", -33, -39, 1.5);
-  createAnimal("bull", 34, 68, 1.5);
-
-  createAnimal("goat", -18, 42, 0.75);
-  createAnimal("goat", 30, 132, 0.75);
-  createAnimal("goat", -39, 100, 0.75);
-}
-
-/* HAYSTACKS */
+/* HAYSTACKS AND FENCES */
 
 function makeHaystack(x, z, scale = 1) {
   const group = new THREE.Group();
   const hay = mat(0xa88a4d);
 
-  const base = addMesh(
+  addMesh(
     group,
-    new THREE.CylinderGeometry(0.9 * scale, 1.1 * scale, 1.1 * scale, 24),
+    new THREE.CylinderGeometry(
+      0.9 * scale, 1.1 * scale, 1.1 * scale, 24
+    ),
     hay, 0, 0.55 * scale, 0
   );
 
-  const top = addMesh(
-    group,
-    new THREE.ConeGeometry(1.05 * scale, 1.15 * scale, 24),
+  addMesh(
+    group, new THREE.ConeGeometry(1.05 * scale, 1.15 * scale, 24),
     hay, 0, 1.6 * scale, 0
   );
 
@@ -763,8 +366,6 @@ makeHaystack(-34, -91, 1.1);
 makeHaystack(36, -42, 0.9);
 makeHaystack(-39, 78, 1);
 makeHaystack(38, 155, 1.1);
-
-/* FENCES */
 
 function makeFence(x, z, length, rotation = 0) {
   const group = new THREE.Group();
@@ -793,30 +394,28 @@ makeFence(39, 143, 16);
 
 /* ELECTRIC POLES */
 
-const poleMat = mat(0x777b78);
-const wireMat = mat(0x252b2c);
+const poleMaterial = mat(0x777b78);
+const wireMaterial = mat(0x252b2c);
 
 function makePole(x, z) {
-  const group = new THREE.Group();
+  const pole = new THREE.Group();
 
   addMesh(
-    group,
-    new THREE.CylinderGeometry(0.13, 0.2, 10, 12),
-    poleMat, 0, 5, 0
+    pole, new THREE.CylinderGeometry(0.13, 0.2, 10, 12),
+    poleMaterial, 0, 5, 0
   );
 
-  addBox(group, 0, 9.2, 0, 3.2, 0.16, 0.18, M.wood);
+  addBox(pole, 0, 9.2, 0, 3.2, 0.16, 0.18, M.wood);
 
   for (const side of [-1, 0, 1]) {
     addMesh(
-      group,
-      new THREE.CylinderGeometry(0.08, 0.08, 0.4, 8),
+      pole, new THREE.CylinderGeometry(0.08, 0.08, 0.4, 8),
       mat(0xe0ded5), side * 1.15, 9.48, 0
     );
   }
 
-  group.position.set(x, 0, z);
-  scene.add(group);
+  pole.position.set(x, 0, z);
+  scene.add(pole);
 }
 
 for (let z = -190; z <= 190; z += 38) {
@@ -832,9 +431,8 @@ function makeWire(x1, z1, x2, z2) {
   );
 
   addMesh(
-    scene,
-    new THREE.TubeGeometry(curve, 20, 0.025, 5, false),
-    wireMat
+    scene, new THREE.TubeGeometry(curve, 20, 0.025, 5, false),
+    wireMaterial
   );
 }
 
@@ -843,52 +441,372 @@ for (let z = -190; z < 190; z += 38) {
   makeWire(10, z, 10, z + 38);
 }
 
-/* WATER POTS */
+/* REAL LOCAL GLB ASSETS */
 
-function makeWaterPot(x, z) {
-  const group = new THREE.Group();
-  const clay = mat(0x92543c);
+const ASSET_PATH = "./assets/";
 
-  const body = addMesh(
-    group, new THREE.SphereGeometry(0.38, 20, 16),
-    clay, 0, 0.4, 0
-  );
-  body.scale.set(1, 1.15, 1);
+const ASSETS = {
+  player: "man-base-character-rigged.glb",
+  man: "casual-man.glb",
+  childGirl: "Female_Child_01.glb",
+  childBoy: "Male_Child_01.glb",
+  elderlyWoman: "elderly-woman-rigged.glb",
+  grandfather: "grandfather-with-cane.glb",
 
-  addMesh(
-    group,
-    new THREE.CylinderGeometry(0.19, 0.23, 0.12, 18),
-    clay, 0, 0.82, 0
-  );
+  cow: "dairy-cow.glb",
+  bull: "bull.glb",
+  goat: "goat.glb",
+  dog: "german-shepherd.glb",
 
-  const water = addMesh(
-    group, new THREE.CircleGeometry(0.16, 18),
-    M.water, 0, 0.89, 0
-  );
-  water.rotation.x = -Math.PI / 2;
+  tractor: "tractor.glb",
+  car: "executive-sedan.glb",
+  motorcycle: "street-motorcycle.glb",
+  electricBike: "electric-bike.glb",
+  mountainBike: "mountain-bike.glb",
+  bmxBike: "bmx-bike.glb",
 
-  group.position.set(x, 0, z);
-  scene.add(group);
+  tree: "village-elm-310fe2.glb",
+  shop: "village-shopfront-d3088e.glb",
+  well: "village-well-v1-lod0.glb",
+  villageTile: "hex-tile-village.glb",
+  guitar: "acoustic-guitar-v1-lod0.glb"
+};
+
+const loader = new GLTFLoader();
+const assetLibrary = {};
+
+const REQUIRED_ASSETS = [
+  "player", "man", "cow", "bull", "goat", "dog",
+  "tractor", "car", "motorcycle", "tree", "shop", "well"
+];
+
+const OPTIONAL_ASSETS = [
+  "childGirl", "childBoy", "elderlyWoman", "grandfather",
+  "electricBike", "mountainBike", "bmxBike",
+  "villageTile", "guitar"
+];
+
+async function loadOneAsset(name) {
+  if (assetLibrary[name]) return assetLibrary[name];
+
+  const file = ASSETS[name];
+  if (!file) throw new Error("Asset mapping missing: " + name);
+
+  const gltf = await loader.loadAsync(ASSET_PATH + file);
+
+  if (!gltf || !gltf.scene) {
+    throw new Error("GLB model empty: " + file);
+  }
+
+  gltf.scene.traverse(object => {
+    if (!object.isMesh) return;
+
+    object.castShadow = true;
+    object.receiveShadow = true;
+
+    if (object.material) {
+      const materials = Array.isArray(object.material)
+        ? object.material : [object.material];
+
+      for (const material of materials) {
+        if (material.map) {
+          material.map.colorSpace = THREE.SRGBColorSpace;
+        }
+      }
+    }
+  });
+
+  assetLibrary[name] = gltf;
+  return gltf;
 }
 
-makeWaterPot(-18, -88);
-makeWaterPot(30, -12);
-makeWaterPot(-32, 55);
-makeWaterPot(28, 108);
+async function loadAssets() {
+  let loaded = 0;
+
+  for (const name of REQUIRED_ASSETS) {
+    const progress = 5 + (loaded / REQUIRED_ASSETS.length) * 68;
+    status("LOADING " + name.toUpperCase() + "...", progress);
+    await loadOneAsset(name);
+    loaded++;
+  }
+
+  status("LOADING VILLAGE PEOPLE...", 76);
+
+  for (const name of OPTIONAL_ASSETS) {
+    try {
+      await loadOneAsset(name);
+    } catch (error) {
+      console.warn("Optional asset not loaded:", name, error);
+    }
+  }
+}
+
+/* MODEL HELPERS */
+
+function cloneModel(name) {
+  const original = assetLibrary[name];
+
+  if (!original) {
+    throw new Error("Required model not loaded: " + name);
+  }
+
+  return SkeletonUtils.clone(original.scene);
+}
+
+function fitModel(model, targetHeight) {
+  model.updateMatrixWorld(true);
+
+  const bounds = new THREE.Box3().setFromObject(model);
+  const size = new THREE.Vector3();
+  bounds.getSize(size);
+
+  if (!Number.isFinite(size.y) || size.y <= 0) {
+    throw new Error("Invalid model size: height is zero");
+  }
+
+  model.scale.multiplyScalar(targetHeight / size.y);
+  model.updateMatrixWorld(true);
+
+  const fittedBounds = new THREE.Box3().setFromObject(model);
+  model.position.y -= fittedBounds.min.y;
+
+  return model;
+}
+
+function fitVehicle(model, targetLength) {
+  model.updateMatrixWorld(true);
+
+  const bounds = new THREE.Box3().setFromObject(model);
+  const size = new THREE.Vector3();
+  bounds.getSize(size);
+
+  const longest = Math.max(size.x, size.z);
+
+  if (!Number.isFinite(longest) || longest <= 0) {
+    throw new Error("Invalid vehicle dimensions");
+  }
+
+  model.scale.multiplyScalar(targetLength / longest);
+  model.updateMatrixWorld(true);
+
+  const fittedBounds = new THREE.Box3().setFromObject(model);
+  model.position.y -= fittedBounds.min.y;
+
+  return model;
+}
+
+function makeActor(name, height, position, rotation = 0) {
+  const model = fitModel(cloneModel(name), height);
+
+  const root = new THREE.Group();
+  root.add(model);
+  root.position.set(position.x, position.y || 0, position.z);
+  root.rotation.y = rotation;
+  scene.add(root);
+
+  const clips = assetLibrary[name].animations || [];
+  const mixer = new THREE.AnimationMixer(model);
+  const actions = {};
+
+  function findAnimation(patterns) {
+    return clips.find(clip =>
+      patterns.some(pattern =>
+        clip.name.toLowerCase().includes(pattern)
+      )
+    );
+  }
+
+  const animationMap = {
+    idle: ["idle", "stand"],
+    walk: ["walk"],
+    run: ["run", "jog"],
+    graze: ["graze", "eat"]
+  };
+
+  for (const [key, patterns] of Object.entries(animationMap)) {
+    const clip = findAnimation(patterns);
+    if (clip) actions[key] = mixer.clipAction(clip);
+  }
+
+  const firstAction = actions.idle || actions.walk ||
+    Object.values(actions)[0] || null;
+
+  if (firstAction) firstAction.play();
+
+  return {
+    root,
+    model,
+    mixer,
+    actions,
+    current: firstAction,
+
+    changeAnimation(key) {
+      const next = actions[key] || actions.idle || actions.walk;
+      if (!next || next === this.current) return;
+
+      next.reset();
+      next.enabled = true;
+      next.setEffectiveWeight(1);
+      next.play();
+
+      if (this.current) {
+        this.current.crossFadeTo(next, 0.22, true);
+      }
+
+      this.current = next;
+    }
+  };
+}
+
+function makeVehicle(name, length, position, rotation = 0) {
+  const model = fitVehicle(cloneModel(name), length);
+
+  const root = new THREE.Group();
+  root.add(model);
+  root.position.set(position.x, 0, position.z);
+  root.rotation.y = rotation;
+  scene.add(root);
+
+  return root;
+}
+
+/* IMPORTED VILLAGE PROPS */
+
+const importedProps = [];
+
+function addImportedProp(name, position, height, rotation = 0) {
+  if (!assetLibrary[name]) return null;
+
+  const model = cloneModel(name);
+  fitModel(model, height);
+  model.position.set(position.x, 0, position.z);
+  model.rotation.y = rotation;
+  scene.add(model);
+  importedProps.push(model);
+  return model;
+}
+
+function createVillageAssets() {
+  addImportedProp("tree", { x: -17, z: -28 }, 8);
+  addImportedProp("tree", { x: 18, z: 28 }, 8);
+  addImportedProp("tree", { x: -45, z: 95 }, 9);
+  addImportedProp("tree", { x: 48, z: -90 }, 9);
+
+  addImportedProp("shop", { x: 13, z: -9 }, 5, Math.PI);
+  addImportedProp("shop", { x: -13, z: 78 }, 5);
+  addImportedProp("well", { x: -31, z: -55 }, 2.2);
+  addImportedProp("well", { x: 34, z: 116 }, 2.2);
+}
+
+/* PLAYER AND VILLAGERS */
+
+let playerActor = null;
+const villagers = [];
+
+function createPeople() {
+  playerActor = makeActor(
+    "player", 1.75,
+    { x: 0, y: 0, z: 0 }
+  );
+
+  const people = [
+    { name: "man", x: 8, z: 15, height: 1.7 },
+    { name: "man", x: -12, z: 30, height: 1.7 },
+    { name: "man", x: 30, z: -20, height: 1.7 },
+    { name: "man", x: -30, z: -25, height: 1.7 },
+    { name: "childGirl", x: 45, z: 65, height: 1.25 },
+    { name: "childBoy", x: -42, z: 12, height: 1.25 },
+    { name: "elderlyWoman", x: 18, z: 92, height: 1.6 },
+    { name: "grandfather", x: -18, z: -115, height: 1.65 }
+  ];
+
+  for (const person of people) {
+    if (!assetLibrary[person.name]) continue;
+
+    const actor = makeActor(
+      person.name,
+      person.height,
+      { x: person.x, y: 0, z: person.z }
+    );
+
+    villagers.push({
+      actor,
+      phase: Math.random() * 10,
+      originX: person.x,
+      originZ: person.z
+    });
+  }
+}
+
+/* VEHICLES */
+
+const traffic = [];
+
+function createVehicles() {
+  const tractor = makeVehicle(
+    "tractor", 4.4, { x: -2.5, z: -155 }, Math.PI
+  );
+  traffic.push({ mesh: tractor, speed: 3.2 });
+
+  const car = makeVehicle(
+    "car", 5, { x: 2.5, z: -105 }, 0
+  );
+  traffic.push({ mesh: car, speed: -7 });
+
+  const motorcycle = makeVehicle(
+    "motorcycle", 2.1, { x: 2.5, z: 145 }, 0
+  );
+  traffic.push({ mesh: motorcycle, speed: -5.5 });
+
+  const bike = makeVehicle(
+    "electricBike", 2.1, { x: -2.5, z: -65 }, Math.PI
+  );
+  traffic.push({ mesh: bike, speed: 5.5 });
+}
+
+/* FARM ANIMALS AND DOG */
+
+const animals = [];
+let dogActor = null;
+
+function createAnimal(name, x, z, height) {
+  const actor = makeActor(
+    name, height, { x, y: 0, z }
+  );
+
+  animals.push({
+    actor,
+    phase: Math.random() * 8
+  });
+}
+
+function createAnimals() {
+  createAnimal("cow", -17, -77, 1.45);
+  createAnimal("cow", 31, -94, 1.4);
+  createAnimal("bull", -33, -39, 1.5);
+  createAnimal("bull", 34, 68, 1.5);
+  createAnimal("goat", -18, 42, 0.75);
+  createAnimal("goat", 30, 132, 0.75);
+  createAnimal("goat", -39, 100, 0.75);
+
+  dogActor = makeActor(
+    "dog", 0.85, { x: 5, y: 0, z: 8 }
+  );
+}
 
 /* BIRDS */
 
 const birds = [];
 
 function createBirds() {
-  const birdMat = mat(0x373a35);
+  const birdMaterial = mat(0x373a35);
 
   for (let i = 0; i < 10; i++) {
     const bird = new THREE.Group();
 
     const body = addMesh(
       bird, new THREE.SphereGeometry(0.2, 12, 10),
-      birdMat
+      birdMaterial
     );
     body.scale.set(0.8, 0.7, 1.3);
 
@@ -901,7 +819,7 @@ function createBirds() {
 
       const wing = addMesh(
         pivot, new THREE.SphereGeometry(0.3, 10, 8),
-        birdMat, side * 0.3, 0, 0
+        birdMaterial, side * 0.3, 0, 0
       );
       wing.scale.set(1.6, 0.12, 0.55);
       wings.push({ pivot, side });
@@ -955,13 +873,13 @@ let moveX = 0;
 let moveY = 0;
 let joyPointer = null;
 
-function updateJoystick(e) {
+function updateJoystick(event) {
   const rect = joystick.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
 
-  let dx = e.clientX - cx;
-  let dy = e.clientY - cy;
+  let dx = event.clientX - centerX;
+  let dy = event.clientY - centerY;
   const max = 43;
   const distance = Math.hypot(dx, dy);
 
@@ -976,18 +894,18 @@ function updateJoystick(e) {
   moveY = dy / max;
 }
 
-joystick.addEventListener("pointerdown", e => {
-  joyPointer = e.pointerId;
-  joystick.setPointerCapture(e.pointerId);
-  updateJoystick(e);
+joystick.addEventListener("pointerdown", event => {
+  joyPointer = event.pointerId;
+  joystick.setPointerCapture(event.pointerId);
+  updateJoystick(event);
 });
 
-joystick.addEventListener("pointermove", e => {
-  if (e.pointerId === joyPointer) updateJoystick(e);
+joystick.addEventListener("pointermove", event => {
+  if (event.pointerId === joyPointer) updateJoystick(event);
 });
 
-function releaseJoy(e) {
-  if (e.pointerId !== joyPointer) return;
+function releaseJoystick(event) {
+  if (event.pointerId !== joyPointer) return;
 
   joyPointer = null;
   moveX = 0;
@@ -996,10 +914,10 @@ function releaseJoy(e) {
   stick.style.top = "35px";
 }
 
-joystick.addEventListener("pointerup", releaseJoy);
-joystick.addEventListener("pointercancel", releaseJoy);
+joystick.addEventListener("pointerup", releaseJoystick);
+joystick.addEventListener("pointercancel", releaseJoystick);
 
-/* JUMP */
+/* JUMP BUTTON */
 
 const jumpButton = document.createElement("button");
 jumpButton.id = "jump";
@@ -1017,14 +935,14 @@ let jumpVelocity = 0;
 let isJumping = false;
 
 function jump() {
-  if (!isJumping) {
+  if (gameStarted && !isJumping) {
     jumpVelocity = 7.5;
     isJumping = true;
   }
 }
 
-jumpButton.addEventListener("pointerdown", e => {
-  e.preventDefault();
+jumpButton.addEventListener("pointerdown", event => {
+  event.preventDefault();
   jump();
 });
 
@@ -1038,11 +956,13 @@ let lookTouchId = null;
 let lastTouchX = 0;
 let lastTouchY = 0;
 
-window.addEventListener("touchstart", e => {
+window.addEventListener("touchstart", event => {
   if (lookTouchId !== null) return;
 
-  const touch = Array.from(e.changedTouches).find(t => {
-    const element = document.elementFromPoint(t.clientX, t.clientY);
+  const touch = Array.from(event.changedTouches).find(item => {
+    const element = document.elementFromPoint(
+      item.clientX, item.clientY
+    );
     return element && !element.closest("#joystick,#jump");
   });
 
@@ -1053,11 +973,11 @@ window.addEventListener("touchstart", e => {
   lastTouchY = touch.clientY;
 }, { capture: true, passive: false });
 
-window.addEventListener("touchmove", e => {
+window.addEventListener("touchmove", event => {
   if (lookTouchId === null) return;
 
-  const touch = Array.from(e.touches).find(
-    t => t.identifier === lookTouchId
+  const touch = Array.from(event.touches).find(
+    item => item.identifier === lookTouchId
   );
 
   if (!touch) return;
@@ -1073,19 +993,19 @@ window.addEventListener("touchmove", e => {
     cameraPitch + dy * 0.005, 0.18, 1.25
   );
 
-  e.preventDefault();
+  event.preventDefault();
 }, { capture: true, passive: false });
 
-function endLook(e) {
-  if (Array.from(e.changedTouches).some(
-    t => t.identifier === lookTouchId
+function endCameraLook(event) {
+  if (Array.from(event.changedTouches).some(
+    touch => touch.identifier === lookTouchId
   )) {
     lookTouchId = null;
   }
 }
 
-window.addEventListener("touchend", endLook);
-window.addEventListener("touchcancel", endLook);
+window.addEventListener("touchend", endCameraLook);
+window.addEventListener("touchcancel", endCameraLook);
 
 /* GAME LOOP */
 
@@ -1095,33 +1015,42 @@ let elapsed = 0;
 function animate() {
   requestAnimationFrame(animate);
 
-  if (!gameStarted) return;
+  if (!gameStarted || !playerActor) return;
 
   const dt = Math.min(clock.getDelta(), 0.04);
   elapsed += dt;
 
-  // Player movement relative to camera direction
+  /* PLAYER MOVEMENT */
+
   const forward = -moveY;
   const side = moveX;
   const moving = Math.hypot(forward, side) > 0.08;
 
   if (moving) {
-    const dx = side * Math.cos(cameraYaw) - forward * Math.sin(cameraYaw);
-    const dz = -side * Math.sin(cameraYaw) - forward * Math.cos(cameraYaw);
+    const dx =
+      side * Math.cos(cameraYaw) -
+      forward * Math.sin(cameraYaw);
+
+    const dz =
+      -side * Math.sin(cameraYaw) -
+      forward * Math.cos(cameraYaw);
+
     const length = Math.hypot(dx, dz) || 1;
 
     playerActor.root.position.x += dx / length * 5 * dt;
     playerActor.root.position.z += dz / length * 5 * dt;
-
-    playerActor.root.rotation.y = Math.atan2(dx / length, dz / length);
+    playerActor.root.rotation.y = Math.atan2(
+      dx / length, dz / length
+    );
 
     const speed = Math.hypot(moveX, moveY);
-    playerActor.changeAnimation(speed > 0.75 ? "Run" : "Walk");
+    playerActor.changeAnimation(speed > 0.75 ? "run" : "walk");
   } else {
-    playerActor.changeAnimation("Idle");
+    playerActor.changeAnimation("idle");
   }
 
-  // Jump physics
+  /* JUMP PHYSICS */
+
   if (isJumping) {
     playerActor.root.position.y += jumpVelocity * dt;
     jumpVelocity -= 18 * dt;
@@ -1133,43 +1062,79 @@ function animate() {
     }
   }
 
-  // Player animation mixer
   playerActor.mixer.update(dt);
 
-  // Villagers
-  for (const v of villagers) {
-    v.actor.mixer.update(dt);
-    v.actor.changeAnimation("Idle");
+  /* VILLAGERS */
+
+  for (const villager of villagers) {
+    villager.actor.mixer.update(dt);
+    villager.actor.changeAnimation("idle");
   }
 
-  // Traffic movement
+  /* TRAFFIC */
+
   for (const vehicle of traffic) {
     vehicle.mesh.position.z += vehicle.speed * dt;
 
     if (vehicle.mesh.position.z > 220) {
       vehicle.mesh.position.z = -220;
     }
+
     if (vehicle.mesh.position.z < -220) {
       vehicle.mesh.position.z = 220;
     }
   }
 
-  // Animal animations
+  /* FARM ANIMALS */
+
   for (const animal of animals) {
     animal.actor.mixer.update(dt);
 
-    if (animal.actor.actions.Graze && Math.sin(elapsed * 0.15 + animal.phase) > 0.7) {
-      animal.actor.changeAnimation("Graze");
+    if (
+      animal.actor.actions.graze &&
+      Math.sin(elapsed * 0.15 + animal.phase) > 0.7
+    ) {
+      animal.actor.changeAnimation("graze");
     } else {
-      animal.actor.changeAnimation("Idle");
+      animal.actor.changeAnimation("idle");
     }
   }
 
-  // Birds
+  /* GERMAN SHEPHERD */
+
+  if (dogActor) {
+    dogActor.mixer.update(dt);
+
+    const playerPosition = playerActor.root.position;
+    const dogPosition = dogActor.root.position;
+    const distance = dogPosition.distanceTo(playerPosition);
+
+    if (distance > 3.5) {
+      const direction = new THREE.Vector3()
+        .subVectors(playerPosition, dogPosition)
+        .normalize();
+
+      dogPosition.x += direction.x * 2.2 * dt;
+      dogPosition.z += direction.z * 2.2 * dt;
+
+      dogActor.root.rotation.y = Math.atan2(
+        direction.x, direction.z
+      );
+
+      dogActor.changeAnimation("walk");
+    } else {
+      dogActor.changeAnimation("idle");
+    }
+  }
+
+  /* BIRDS */
+
   for (const bird of birds) {
     bird.mesh.position.x += bird.speed * dt;
-    bird.mesh.position.y += Math.sin(elapsed * 2 + bird.phase) * dt * 0.25;
-    bird.mesh.position.z += Math.cos(elapsed + bird.phase) * dt * 0.35;
+    bird.mesh.position.y +=
+      Math.sin(elapsed * 2 + bird.phase) * dt * 0.25;
+    bird.mesh.position.z +=
+      Math.cos(elapsed + bird.phase) * dt * 0.35;
 
     if (bird.mesh.position.x > 100) {
       bird.mesh.position.x = -100;
@@ -1181,16 +1146,24 @@ function animate() {
     }
   }
 
-  // Third-person camera
-  const h = cameraDistance * Math.cos(cameraPitch);
+  /* THIRD-PERSON CAMERA */
 
-  const target = new THREE.Vector3(
-    playerActor.root.position.x + Math.sin(cameraYaw) * h,
-    playerActor.root.position.y + cameraDistance * Math.sin(cameraPitch),
-    playerActor.root.position.z + Math.cos(cameraYaw) * h
+  const horizontalDistance = cameraDistance * Math.cos(cameraPitch);
+
+  const cameraTarget = new THREE.Vector3(
+    playerActor.root.position.x +
+      Math.sin(cameraYaw) * horizontalDistance,
+
+    playerActor.root.position.y +
+      cameraDistance * Math.sin(cameraPitch),
+
+    playerActor.root.position.z +
+      Math.cos(cameraYaw) * horizontalDistance
   );
 
-  camera.position.lerp(target, 1 - Math.exp(-7 * dt));
+  camera.position.lerp(
+    cameraTarget, 1 - Math.exp(-7 * dt)
+  );
 
   camera.lookAt(
     playerActor.root.position.x,
@@ -1201,7 +1174,7 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-/* BUILD AND START */
+/* START GAME */
 
 async function startGame() {
   gameStarted = false;
@@ -1209,12 +1182,13 @@ async function startGame() {
   loadError.textContent = "";
 
   try {
-    status("DOWNLOADING REAL 3D MODELS...", 3);
+    status("LOADING REAL LOCAL 3D MODELS...", 3);
 
     await loadAssets();
 
     status("BUILDING NAYABASTI...", 82);
 
+    createVillageAssets();
     createPeople();
     createVehicles();
     createAnimals();
@@ -1222,23 +1196,24 @@ async function startGame() {
 
     status("STARTING GAME...", 96);
 
+    camera.position.set(0, 7, 12);
+    camera.lookAt(0, 1, 0);
+
     gameStarted = true;
     loading.remove();
 
+    clock.start();
     animate();
 
-    console.log("MAYUSH GAMEPLAY — REAL 3D ASSETS READY");
+    console.log("NAYABASTI — REAL LOCAL GLB ASSETS LOADED");
   } catch (error) {
     gameStarted = false;
     showAssetError(error);
-    console.error("MAYUSH ASSET ERROR:", error);
+    console.error("NAYABASTI ASSET ERROR:", error);
   }
 }
 
-retryButton.addEventListener("click", () => {
-  startGame();
-});
-
+retryButton.addEventListener("click", startGame);
 startGame();
 
 /* RESIZE */
