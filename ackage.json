@@ -1,0 +1,17 @@
+
+{
+  "name": "mayush-gameplay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MAYUSH.GAMEPLAY - NAYABASTI",
+  "scripts": {
+    "build": "mkdir -p www && cp index.html game.js story.js style.css www/"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/ios": "^7.4.3"
+  }
+}
