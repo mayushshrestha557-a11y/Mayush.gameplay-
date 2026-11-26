@@ -1,11 +1,10 @@
-
 {
   "name": "mayush-gameplay",
   "version": "1.0.0",
   "private": true,
   "description": "MAYUSH.GAMEPLAY - NAYABASTI",
   "scripts": {
-    "build": "mkdir -p www && cp index.html game.js story.js style.css www/"
+    "build": "mkdir -p www && cp index.html game.js story.js style.css IMG_3248.JPG ellis-3d-person-older-man-with-cane.glb www/"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.3"
