@@ -2,18 +2,19 @@
 import { startStory } from "./story.js";
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js";
 
-/* =====================================
-   MAYUSH ADVENTURE
-   NAYABASTI 3D OPEN WORLD
-===================================== */
+// =====================================
+// MAYUSH GAMEPLAY - DUAL CAMERA SYSTEM
+// =====================================
 
-// SCENE
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
-scene.fog = new THREE.Fog(0x87ceeb, 65, 260);
+scene.fog = new THREE.Fog(0x87ceeb, 35, 220);
 
 const camera = new THREE.PerspectiveCamera(
-  65, innerWidth / innerHeight, 0.1, 700
+  65,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  600
 );
 
 const renderer = new THREE.WebGLRenderer({
@@ -21,652 +22,553 @@ const renderer = new THREE.WebGLRenderer({
   powerPreference: "high-performance"
 });
 
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-document.body.style.margin = "0";
-document.body.style.overflow = "hidden";
-document.body.style.background = "#87ceeb";
+renderer.domElement.style.position = "fixed";
+renderer.domElement.style.inset = "0";
+renderer.domElement.style.zIndex = "0";
 document.body.appendChild(renderer.domElement);
 
-// LIGHTING
-scene.add(
-  new THREE.HemisphereLight(0xffffff, 0x53633b, 2)
-);
+// =====================================
+// LIGHTS
+// =====================================
 
-const sunlight = new THREE.DirectionalLight(0xffffff, 2.2);
-sunlight.position.set(35, 60, 25);
+const sunlight = new THREE.DirectionalLight(0xffffff, 2);
+sunlight.position.set(30, 50, 20);
 sunlight.castShadow = true;
-sunlight.shadow.mapSize.set(1024, 1024);
 scene.add(sunlight);
 
-// MATERIAL HELPER
-function material(color) {
-  return new THREE.MeshStandardMaterial({ color });
-}
+scene.add(new THREE.HemisphereLight(0xffffff, 0x52633d, 2));
 
-// BOX HELPER
-function makeBox(w, h, d, color, x, y, z, parent = scene) {
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(w, h, d),
-    material(color)
-  );
+// =====================================
+// WORLD
+// =====================================
 
-  mesh.position.set(x, y, z);
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  parent.add(mesh);
-  return mesh;
-}
-
-// GROUND
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(500, 500),
-  material(0x557c38)
+  new THREE.PlaneGeometry(400, 400),
+  new THREE.MeshStandardMaterial({ color: 0x557c38 })
 );
 
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// MAIN ROAD
-const road = new THREE.Mesh(
-  new THREE.PlaneGeometry(10, 350),
-  material(0x555653)
-);
-
-road.rotation.x = -Math.PI / 2;
-road.position.y = 0.035;
-scene.add(road);
-
-// ROAD EDGES
-for (const x of [-5.1, 5.1]) {
-  const edge = makeBox(0.15, 0.04, 350, 0xd9d4bd, x, 0.06, 0);
-}
-
-// ROAD CENTER LINES
-for (let z = -165; z < 170; z += 10) {
-  const line = makeBox(0.16, 0.045, 4, 0xffffff, 0, 0.07, z);
-}
-
-// CROSS ROAD
-const crossRoad = new THREE.Mesh(
-  new THREE.PlaneGeometry(90, 9),
-  material(0x555653)
-);
-
-crossRoad.rotation.x = -Math.PI / 2;
-crossRoad.position.set(0, 0.045, -35);
-scene.add(crossRoad);
-
-// ZEBRA CROSSING
-for (let i = 0; i < 8; i++) {
-  const stripe = new THREE.Mesh(
-    new THREE.PlaneGeometry(7, 0.65),
-    material(0xffffff)
+function makeRoad(x, z, width, length) {
+  const road = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, length),
+    new THREE.MeshStandardMaterial({ color: 0x77736b })
   );
 
-  stripe.rotation.x = -Math.PI / 2;
-  stripe.position.set(0, 0.09, -42 + i * 0.95);
-  scene.add(stripe);
+  road.rotation.x = -Math.PI / 2;
+  road.position.set(x, 0.04, z);
+  road.receiveShadow = true;
+  scene.add(road);
 }
 
-// TREE
-function makeTree(x, z, scale = 1) {
-  const group = new THREE.Group();
-  group.position.set(x, 0, z);
-  group.scale.setScalar(scale);
+makeRoad(0, 0, 9, 350);
+makeRoad(0, -35, 80, 8);
 
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.38, 3, 10),
-    material(0x704323)
+// Road markings
+for (let z = -170; z < 170; z += 12) {
+  const line = new THREE.Mesh(
+    new THREE.BoxGeometry(0.18, 0.04, 5),
+    new THREE.MeshStandardMaterial({ color: 0xffffff })
   );
 
-  trunk.position.y = 1.5;
-  trunk.castShadow = true;
-  group.add(trunk);
-
-  const leaves = new THREE.Mesh(
-    new THREE.SphereGeometry(1.8, 12, 10),
-    material(0x267d32)
-  );
-
-  leaves.position.y = 3.8;
-  leaves.scale.set(1, 1.1, 1);
-  leaves.castShadow = true;
-  group.add(leaves);
-
-  scene.add(group);
-  return group;
+  line.position.set(0, 0.09, z);
+  scene.add(line);
 }
 
-// BUSH
-function makeBush(x, z) {
-  const bush = new THREE.Mesh(
-    new THREE.SphereGeometry(0.8, 10, 8),
-    material(0x347b29)
-  );
+// =====================================
+// SIMPLE VILLAGE BUILDINGS
+// =====================================
 
-  bush.position.set(x, 0.65, z);
-  bush.scale.set(1.3, 0.8, 1);
-  scene.add(bush);
-}
-
-// NEPALI HOUSE
-function makeHouse(x, z, wallColor) {
+function makeHouse(x, z, color = 0xd8b48c) {
   const house = new THREE.Group();
+
+  const walls = new THREE.Mesh(
+    new THREE.BoxGeometry(8, 5, 7),
+    new THREE.MeshStandardMaterial({ color })
+  );
+  walls.position.y = 2.5;
+  walls.castShadow = true;
+  house.add(walls);
+
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(6.3, 3, 4),
+    new THREE.MeshStandardMaterial({ color: 0x8b3e2f })
+  );
+  roof.position.y = 6.4;
+  roof.rotation.y = Math.PI / 4;
+  roof.castShadow = true;
+  house.add(roof);
+
   house.position.set(x, 0, z);
   scene.add(house);
+}
 
-  // Main walls
-  makeBox(6, 3.5, 5, wallColor, 0, 1.75, 0, house);
+makeHouse(-14, -12, 0xd9b58c);
+makeHouse(15, -28, 0xe0c39a);
+makeHouse(-17, -48, 0xc9a77b);
+makeHouse(18, -65, 0xd8b48c);
+makeHouse(-15, -85, 0xe0c39a);
 
-  // Roof
-  const roofLeft = makeBox(
-    3.5, 0.3, 5.8, 0x8b3026,
-    -1.4, 3.7, 0, house
+// School
+const school = new THREE.Mesh(
+  new THREE.BoxGeometry(18, 7, 10),
+  new THREE.MeshStandardMaterial({ color: 0xe8d4a5 })
+);
+school.position.set(27, 3.5, -70);
+scene.add(school);
+
+// School roof
+const schoolRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(19, 0.7, 11),
+  new THREE.MeshStandardMaterial({ color: 0x9b3328 })
+);
+schoolRoof.position.set(27, 7.3, -70);
+scene.add(schoolRoof);
+
+// Playground
+const playground = new THREE.Mesh(
+  new THREE.PlaneGeometry(25, 20),
+  new THREE.MeshStandardMaterial({ color: 0x6c9848 })
+);
+playground.rotation.x = -Math.PI / 2;
+playground.position.set(28, 0.06, -25);
+scene.add(playground);
+
+// Trees
+function makeTree(x, z) {
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.35, 0.5, 3, 8),
+    new THREE.MeshStandardMaterial({ color: 0x704326 })
   );
 
-  roofLeft.rotation.z = -0.45;
+  trunk.position.set(x, 1.5, z);
+  scene.add(trunk);
 
-  const roofRight = makeBox(
-    3.5, 0.3, 5.8, 0x8b3026,
-    1.4, 3.7, 0, house
+  const leaves = new THREE.Mesh(
+    new THREE.SphereGeometry(2.2, 10, 10),
+    new THREE.MeshStandardMaterial({ color: 0x286b32 })
   );
 
-  roofRight.rotation.z = 0.45;
-
-  // Door
-  makeBox(1.1, 2.2, 0.16, 0x58331e,
-    0, 1.1, -2.56, house);
-
-  // Windows
-  for (const xPos of [-2, 2]) {
-    makeBox(0.9, 0.9, 0.15, 0x75c7e5,
-      xPos, 2.2, -2.57, house);
-
-    makeBox(0.1, 1, 0.2, 0xffffff,
-      xPos, 2.2, -2.68, house);
-  }
-
-  // Courtyard
-  makeBox(8, 0.12, 7, 0xbca68a,
-    0, 0.02, -6, house);
+  leaves.position.set(x, 4, z);
+  leaves.castShadow = true;
+  scene.add(leaves);
 }
 
-// VILLAGE HOUSES
-makeHouse(-14, -8, 0xe5c69a);
-makeHouse(15, -12, 0xd9b58b);
-makeHouse(-17, -45, 0xd4d0b4);
-makeHouse(17, -58, 0xe0c49b);
-makeHouse(-14, 35, 0xe7d3a8);
-makeHouse(15, 45, 0xcbb18b);
-makeHouse(-27, -80, 0xe2c6a1);
-makeHouse(26, -95, 0xe6d3b0);
-
-// TREES
-for (let i = 0; i < 55; i++) {
-  const side = Math.random() > 0.5 ? 1 : -1;
-  const x = side * (9 + Math.random() * 35);
-  const z = -150 + Math.random() * 300;
-
-  makeTree(x, z, 0.7 + Math.random() * 0.7);
+for (let i = 0; i < 35; i++) {
+  const z = -150 + i * 9;
+  makeTree(-13 - Math.random() * 8, z);
+  makeTree(13 + Math.random() * 8, z);
 }
 
-// BUSHES
-for (let i = 0; i < 25; i++) {
-  const x = (Math.random() - 0.5) * 65;
-  const z = (Math.random() - 0.5) * 150;
+// =====================================
+// PLAYER
+// =====================================
 
-  if (Math.abs(x) > 7) makeBush(x, z);
-}
-
-// CHAUTARI
-function makeChautari(x, z) {
-  const platform = new THREE.Mesh(
-    new THREE.CylinderGeometry(3.5, 3.5, 0.5, 16),
-    material(0xb5a18a)
-  );
-
-  platform.position.set(x, 0.25, z);
-  platform.receiveShadow = true;
-  scene.add(platform);
-
-  makeTree(x, z, 1.8);
-
-  for (let i = 0; i < 6; i++) {
-    const angle = i * Math.PI / 3;
-
-    makeBox(
-      1.7, 0.5, 0.7, 0x888078,
-      x + Math.cos(angle) * 2.3,
-      0.7,
-      z + Math.sin(angle) * 2.3
-    );
-  }
-}
-
-makeChautari(-23, -25);
-
-// SCHOOL
-function makeSchool(x, z) {
-  const school = new THREE.Group();
-  school.position.set(x, 0, z);
-  scene.add(school);
-
-  makeBox(15, 5, 9, 0xe9d8b7, 0, 2.5, 0, school);
-  makeBox(16, 0.5, 10, 0x9b3028, 0, 5.2, 0, school);
-
-  // School entrance
-  makeBox(1.6, 2.6, 0.2, 0x57351f,
-    0, 1.3, -4.65, school);
-
-  // Windows
-  for (let i = -2; i <= 2; i++) {
-    makeBox(
-      1.5, 1.3, 0.15, 0x79c8e6,
-      i * 2.5, 3, -4.65, school
-    );
-  }
-
-  // School sign
-  makeBox(6, 0.9, 0.25, 0x24613b,
-    0, 5.9, -4.8, school);
-}
-
-makeSchool(26, -65);
-
-// PLAYGROUND
-function makePlayground(x, z) {
-  const field = new THREE.Mesh(
-    new THREE.PlaneGeometry(28, 23),
-    material(0x65a947)
-  );
-
-  field.rotation.x = -Math.PI / 2;
-  field.position.set(x, 0.06, z);
-  scene.add(field);
-
-  // Field boundary
-  makeBox(28, 0.12, 0.15, 0xffffff, x, 0.12, z - 11.5);
-  makeBox(28, 0.12, 0.15, 0xffffff, x, 0.12, z + 11.5);
-
-  // Football goal
-  makeBox(0.2, 2.8, 0.2, 0xffffff, x - 9, 1.4, z);
-  makeBox(0.2, 2.8, 0.2, 0xffffff, x + 9, 1.4, z);
-  makeBox(18, 0.2, 0.2, 0xffffff, x, 2.8, z);
-
-  // Swing frame
-  makeBox(0.2, 3.5, 0.2, 0x333333, x + 13, 1.75, z);
-  makeBox(0.2, 3.5, 0.2, 0x333333, x + 16, 1.75, z);
-  makeBox(3.4, 0.2, 0.2, 0x333333, x + 14.5, 3.5, z);
-
-  // Swing seat
-  makeBox(1.5, 0.2, 0.6, 0xe7b52c,
-    x + 14.5, 1.3, z);
-}
-
-makePlayground(27, -15);
-
-// TRAFFIC LIGHT
-function makeTrafficLight(x, z) {
-  makeBox(0.18, 5, 0.18, 0x333333, x, 2.5, z);
-  makeBox(0.9, 2.2, 0.6, 0x202020, x, 5.5, z);
-
-  const lights = [];
-
-  const colors = [0xff0000, 0xffcc00, 0x00dd44];
-
-  colors.forEach((color, i) => {
-    const light = new THREE.Mesh(
-      new THREE.SphereGeometry(0.25, 16, 12),
-      new THREE.MeshStandardMaterial({
-        color,
-        emissive: color,
-        emissiveIntensity: 0.5
-      })
-    );
-
-    light.position.set(x, 6.2 - i * 0.65, z - 0.32);
-    scene.add(light);
-    lights.push(light);
-  });
-
-  return lights;
-}
-
-const trafficLights = [
-  makeTrafficLight(-6.5, -35),
-  makeTrafficLight(6.5, -35)
-];
-
-// CHARACTER
 const player = new THREE.Group();
+
+const body = new THREE.Mesh(
+  new THREE.CapsuleGeometry(0.45, 1, 4, 8),
+  new THREE.MeshStandardMaterial({ color: 0x263f75 })
+);
+body.position.y = 1.1;
+body.castShadow = true;
+player.add(body);
+
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(0.38, 16, 16),
+  new THREE.MeshStandardMaterial({ color: 0xd5a078 })
+);
+head.position.y = 2.05;
+player.add(head);
+
+player.position.set(0, 0, 0);
 scene.add(player);
 
-function part(parent, geometry, color, x, y, z) {
-  const mesh = new THREE.Mesh(
-    geometry,
-    material(color)
+// =====================================
+// CAMERA SETTINGS
+// =====================================
+
+let cameraYaw = 0;
+let cameraPitch = 0.28;
+let cameraDistance = 8;
+let cameraHeight = 2.2;
+
+let cameraMode = "FREE";
+
+const cameraTarget = new THREE.Vector3();
+const desiredCameraPosition = new THREE.Vector3();
+
+function updateCamera() {
+  cameraTarget.set(
+    player.position.x,
+    player.position.y + 1.5,
+    player.position.z
   );
 
-  mesh.position.set(x, y, z);
-  mesh.castShadow = true;
-  parent.add(mesh);
-  return mesh;
+  const horizontal = Math.cos(cameraPitch) * cameraDistance;
+
+  desiredCameraPosition.set(
+    player.position.x + Math.sin(cameraYaw) * horizontal,
+    player.position.y + cameraHeight +
+      Math.sin(cameraPitch) * cameraDistance,
+    player.position.z + Math.cos(cameraYaw) * horizontal
+  );
+
+  camera.position.lerp(desiredCameraPosition, 0.14);
+  camera.lookAt(cameraTarget);
 }
 
-// Body
-part(player, new THREE.BoxGeometry(0.85, 1.05, 0.42),
-  0x263f75, 0, 1.55, 0);
+// =====================================
+// CAMERA MODE BUTTON
+// =====================================
 
-// Head
-part(player, new THREE.SphereGeometry(0.34, 20, 20),
-  0xe8b995, 0, 2.32, 0);
+const modeButton = document.createElement("button");
+modeButton.textContent = "CAM: FREE";
 
-// Hair
-part(player, new THREE.SphereGeometry(
-  0.35, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2
-), 0x171313, 0, 2.42, 0);
+Object.assign(modeButton.style, {
+  position: "fixed",
+  top: "15px",
+  right: "15px",
+  zIndex: "10",
+  padding: "12px 17px",
+  border: "1px solid white",
+  borderRadius: "12px",
+  background: "rgba(0,0,0,0.65)",
+  color: "white",
+  fontWeight: "bold",
+  fontSize: "13px"
+});
 
-// Eyes
-part(player, new THREE.SphereGeometry(0.045, 10, 10),
-  0x111111, -0.12, 2.35, -0.29);
+document.body.appendChild(modeButton);
 
-part(player, new THREE.SphereGeometry(0.045, 10, 10),
-  0x111111, 0.12, 2.35, -0.29);
+modeButton.addEventListener("click", () => {
+  cameraMode = cameraMode === "FREE" ? "FACE" : "FREE";
+  modeButton.textContent = "CAM: " + cameraMode;
+});
 
-// Arms
-const leftArm = new THREE.Group();
-leftArm.position.set(-0.52, 1.95, 0);
-player.add(leftArm);
+// =====================================
+// MOBILE CAMERA SWIPE
+// =====================================
 
-part(leftArm, new THREE.BoxGeometry(0.22, 0.85, 0.23),
-  0xe8b995, 0, -0.4, 0);
+const cameraArea = document.createElement("div");
 
-const rightArm = new THREE.Group();
-rightArm.position.set(0.52, 1.95, 0);
-player.add(rightArm);
+Object.assign(cameraArea.style, {
+  position: "fixed",
+  top: "65px",
+  right: "0",
+  width: "55%",
+  height: "65%",
+  zIndex: "2",
+  touchAction: "none",
+  background: "transparent"
+});
 
-part(rightArm, new THREE.BoxGeometry(0.22, 0.85, 0.23),
-  0xe8b995, 0, -0.4, 0);
+document.body.appendChild(cameraArea);
 
-// Legs
-const leftLeg = new THREE.Group();
-leftLeg.position.set(-0.23, 1.05, 0);
-player.add(leftLeg);
+let cameraPointer = null;
+let lastX = 0;
+let lastY = 0;
 
-part(leftLeg, new THREE.BoxGeometry(0.3, 0.9, 0.32),
-  0x20232b, 0, -0.4, 0);
+cameraArea.addEventListener("pointerdown", e => {
+  cameraPointer = e.pointerId;
+  lastX = e.clientX;
+  lastY = e.clientY;
+  cameraArea.setPointerCapture(e.pointerId);
+});
 
-const rightLeg = new THREE.Group();
-rightLeg.position.set(0.23, 1.05, 0);
-player.add(rightLeg);
+cameraArea.addEventListener("pointermove", e => {
+  if (cameraPointer !== e.pointerId) return;
 
-part(rightLeg, new THREE.BoxGeometry(0.3, 0.9, 0.32),
-  0x20232b, 0, -0.4, 0);
+  const dx = e.clientX - lastX;
+  const dy = e.clientY - lastY;
 
-// PLAYER START
-player.position.set(0, 0, 8);
+  cameraYaw -= dx * 0.008;
+  cameraPitch += dy * 0.006;
 
-// CAMERA
-camera.position.set(0, 5, 18);
-camera.lookAt(0, 1, 8);
+  cameraPitch = THREE.MathUtils.clamp(
+    cameraPitch,
+    -0.25,
+    0.85
+  );
 
-// MOBILE CONTROLS
-const style = document.createElement("style");
+  lastX = e.clientX;
+  lastY = e.clientY;
+});
 
-style.textContent = `
-.controls {
-  position:fixed;
-  bottom:calc(25px + env(safe-area-inset-bottom));
-  left:18px;
-  display:grid;
-  grid-template-columns:58px 58px 58px;
-  gap:7px;
-  z-index:20;
+cameraArea.addEventListener("pointerup", () => {
+  cameraPointer = null;
+});
+
+cameraArea.addEventListener("pointercancel", () => {
+  cameraPointer = null;
+});
+
+// =====================================
+// MOBILE JOYSTICK
+// =====================================
+
+const joystick = document.createElement("div");
+
+Object.assign(joystick.style, {
+  position: "fixed",
+  bottom: "35px",
+  left: "25px",
+  width: "125px",
+  height: "125px",
+  borderRadius: "50%",
+  border: "2px solid rgba(255,255,255,0.6)",
+  background: "rgba(0,0,0,0.25)",
+  zIndex: "8",
+  touchAction: "none"
+});
+
+document.body.appendChild(joystick);
+
+const stick = document.createElement("div");
+
+Object.assign(stick.style, {
+  position: "absolute",
+  width: "48px",
+  height: "48px",
+  left: "36px",
+  top: "36px",
+  borderRadius: "50%",
+  background: "rgba(255,255,255,0.75)",
+  boxShadow: "0 2px 8px #000"
+});
+
+joystick.appendChild(stick);
+
+let moveX = 0;
+let moveY = 0;
+let joystickPointer = null;
+
+function resetJoystick() {
+  moveX = 0;
+  moveY = 0;
+  stick.style.left = "36px";
+  stick.style.top = "36px";
 }
-.game-btn {
-  width:58px;
-  height:58px;
-  border-radius:50%;
-  background:rgba(255,255,255,.19);
-  border:2px solid rgba(255,255,255,.65);
-  color:white;
-  font-size:25px;
-  font-weight:bold;
-  touch-action:none;
-  -webkit-user-select:none;
-  user-select:none;
-}
-.game-btn:active {
-  background:rgba(255,255,255,.45);
-}
-.jump-btn {
-  position:fixed;
-  right:25px;
-  bottom:calc(45px + env(safe-area-inset-bottom));
-  width:78px;
-  height:78px;
-  border-radius:50%;
-  background:rgba(40,180,100,.30);
-  border:2px solid rgba(255,255,255,.8);
-  color:white;
-  font-weight:bold;
-  font-size:15px;
-  z-index:20;
-  touch-action:none;
-}
-`;
-document.head.appendChild(style);
 
-const controls = document.createElement("div");
-controls.className = "controls";
+joystick.addEventListener("pointerdown", e => {
+  joystickPointer = e.pointerId;
+  joystick.setPointerCapture(e.pointerId);
+  moveJoystick(e);
+});
 
-controls.innerHTML = `
-<div></div>
-<button class="game-btn" data-key="forward">↑</button>
-<div></div>
-<button class="game-btn" data-key="left">←</button>
-<button class="game-btn" data-key="back">↓</button>
-<button class="game-btn" data-key="right">→</button>
-`;
+joystick.addEventListener("pointermove", e => {
+  if (joystickPointer !== e.pointerId) return;
+  moveJoystick(e);
+});
 
-document.body.appendChild(controls);
+function moveJoystick(e) {
+  const rect = joystick.getBoundingClientRect();
 
-const jumpButton = document.createElement("button");
-jumpButton.className = "jump-btn";
-jumpButton.textContent = "JUMP";
-document.body.appendChild(jumpButton);
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
 
-// INPUT
-const keys = {};
+  let dx = e.clientX - centerX;
+  let dy = e.clientY - centerY;
 
-const keyMap = {
-  w: "forward",
-  arrowup: "forward",
-  s: "back",
-  arrowdown: "back",
-  a: "left",
-  arrowleft: "left",
-  d: "right",
-  arrowright: "right"
-};
+  const max = 38;
+  const length = Math.hypot(dx, dy);
 
-window.addEventListener("keydown", e => {
-  const key = keyMap[e.key.toLowerCase()];
-  if (key) {
-    keys[key] = true;
-    e.preventDefault();
+  if (length > max) {
+    dx = dx / length * max;
+    dy = dy / length * max;
   }
 
-  if (e.code === "Space") {
-    jump();
-    e.preventDefault();
+  moveX = dx / max;
+  moveY = dy / max;
+
+  stick.style.left = 36 + dx + "px";
+  stick.style.top = 36 + dy + "px";
+}
+
+joystick.addEventListener("pointerup", () => {
+  joystickPointer = null;
+  resetJoystick();
+});
+
+joystick.addEventListener("pointercancel", () => {
+  joystickPointer = null;
+  resetJoystick();
+});
+
+// =====================================
+// JUMP BUTTON
+// =====================================
+
+const jumpButton = document.createElement("button");
+jumpButton.textContent = "JUMP";
+
+Object.assign(jumpButton.style, {
+  position: "fixed",
+  bottom: "48px",
+  right: "35px",
+  width: "75px",
+  height: "75px",
+  borderRadius: "50%",
+  border: "2px solid white",
+  background: "rgba(20,80,180,0.7)",
+  color: "white",
+  fontWeight: "bold",
+  zIndex: "10",
+  touchAction: "none"
+});
+
+document.body.appendChild(jumpButton);
+
+let jumpVelocity = 0;
+let isJumping = false;
+
+function jump() {
+  if (!isJumping) {
+    jumpVelocity = 0.22;
+    isJumping = true;
+  }
+}
+
+jumpButton.addEventListener("pointerdown", jump);
+
+// =====================================
+// KEYBOARD CONTROLS
+// =====================================
+
+const keys = {};
+
+window.addEventListener("keydown", e => {
+  keys[e.key.toLowerCase()] = true;
+
+  if (e.code === "Space") jump();
+
+  if (e.key.toLowerCase() === "c") {
+    modeButton.click();
   }
 });
 
 window.addEventListener("keyup", e => {
-  const key = keyMap[e.key.toLowerCase()];
-  if (key) keys[key] = false;
+  keys[e.key.toLowerCase()] = false;
 });
 
-window.addEventListener("blur", () => {
-  Object.keys(keys).forEach(key => keys[key] = false);
-});
+// =====================================
+// PLAYER MOVEMENT
+// =====================================
 
-// TOUCH MOVEMENT
-document.querySelectorAll("[data-key]").forEach(btn => {
-  const key = btn.dataset.key;
+const clock = new THREE.Clock();
 
-  btn.addEventListener("pointerdown", e => {
-    e.preventDefault();
-    keys[key] = true;
-    btn.setPointerCapture(e.pointerId);
-  });
+function updatePlayer(delta) {
+  let forward = -moveY;
+  let sideways = moveX;
 
-  ["pointerup", "pointercancel", "lostpointercapture"].forEach(event => {
-    btn.addEventListener(event, () => {
-      keys[key] = false;
-    });
-  });
-});
+  if (keys["w"] || keys["arrowup"]) forward = 1;
+  if (keys["s"] || keys["arrowdown"]) forward = -1;
+  if (keys["a"] || keys["arrowleft"]) sideways = -1;
+  if (keys["d"] || keys["arrowright"]) sideways = 1;
 
-// JUMP PHYSICS
-let velocityY = 0;
-let onGround = true;
+  const inputLength = Math.hypot(forward, sideways);
 
-function jump() {
-  if (!onGround) return;
+  if (inputLength > 1) {
+    forward /= inputLength;
+    sideways /= inputLength;
+  }
 
-  velocityY = 5.5;
-  onGround = false;
+  const speed = 7 * delta;
+
+  const forwardX = -Math.sin(cameraYaw);
+  const forwardZ = -Math.cos(cameraYaw);
+
+  const rightX = Math.cos(cameraYaw);
+  const rightZ = -Math.sin(cameraYaw);
+
+  const dx = (forwardX * forward + rightX * sideways) * speed;
+  const dz = (forwardZ * forward + rightZ * sideways) * speed;
+
+  player.position.x += dx;
+  player.position.z += dz;
+
+  if (cameraMode === "FACE") {
+    player.rotation.y = cameraYaw;
+  } else if (inputLength > 0.08) {
+    player.rotation.y = Math.atan2(dx, dz);
+  }
+
+  // Jump physics
+  if (isJumping) {
+    player.position.y += jumpVelocity;
+    jumpVelocity -= 0.012;
+
+    if (player.position.y <= 0) {
+      player.position.y = 0;
+      jumpVelocity = 0;
+      isJumping = false;
+    }
+  }
 }
 
-jumpButton.addEventListener("pointerdown", e => {
-  e.preventDefault();
-  jump();
-});
+// =====================================
+// RESIZE
+// =====================================
 
-// GAME ANIMATION
-const clock = new THREE.Clock();
-let walkTime = 0;
-let trafficTime = 0;
+function resizeGame() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+}
+
+window.addEventListener("resize", resizeGame);
+
+// =====================================
+// FULLSCREEN SUPPORT
+// =====================================
+
+async function enterFullscreen() {
+  try {
+    if (document.documentElement.requestFullscreen &&
+        !document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    }
+  } catch (error) {
+    console.log("Fullscreen requires user permission.");
+  }
+
+  try {
+    if (screen.orientation?.lock) {
+      await screen.orientation.lock("landscape");
+    }
+  } catch (error) {
+    console.log("Rotate phone to landscape manually.");
+  }
+}
+
+modeButton.addEventListener("dblclick", enterFullscreen);
+
+// =====================================
+// GAME LOOP
+// =====================================
 
 function animate() {
   requestAnimationFrame(animate);
 
   const delta = Math.min(clock.getDelta(), 0.05);
-  const moving =
-    keys.forward || keys.back || keys.left || keys.right;
 
-  const speed = 7 * delta;
-
-  if (keys.forward) player.position.z -= speed;
-  if (keys.back) player.position.z += speed;
-  if (keys.left) player.position.x -= speed;
-  if (keys.right) player.position.x += speed;
-
-  // LIMIT WORLD
-  player.position.x = THREE.MathUtils.clamp(
-    player.position.x, -120, 120
-  );
-
-  player.position.z = THREE.MathUtils.clamp(
-    player.position.z, -165, 165
-  );
-
-  // CHARACTER DIRECTION
-  if (keys.forward) player.rotation.y = 0;
-  else if (keys.back) player.rotation.y = Math.PI;
-  else if (keys.left) player.rotation.y = Math.PI / 2;
-  else if (keys.right) player.rotation.y = -Math.PI / 2;
-
-  // WALK ANIMATION
-  if (moving && onGround) {
-    walkTime += delta * 10;
-
-    leftArm.rotation.x = Math.sin(walkTime) * 0.7;
-    rightArm.rotation.x = -Math.sin(walkTime) * 0.7;
-
-    leftLeg.rotation.x = -Math.sin(walkTime) * 0.65;
-    rightLeg.rotation.x = Math.sin(walkTime) * 0.65;
-  } else if (onGround) {
-    leftArm.rotation.x = 0;
-    rightArm.rotation.x = 0;
-    leftLeg.rotation.x = 0;
-    rightLeg.rotation.x = 0;
-  }
-
-  // JUMP
-  if (!onGround) {
-    velocityY -= 14 * delta;
-    player.position.y += velocityY * delta;
-
-    if (player.position.y <= 0) {
-      player.position.y = 0;
-      velocityY = 0;
-      onGround = true;
-    }
-  }
-
-  // TRAFFIC LIGHT ANIMATION
-  trafficTime += delta;
-
-  const active = Math.floor(trafficTime / 3) % 3;
-
-  trafficLights.forEach(lights => {
-    lights.forEach((light, i) => {
-      light.material.emissiveIntensity =
-        i === active ? 2 : 0.1;
-    });
-  });
-
-  // CAMERA FOLLOW
-  const cameraTarget = new THREE.Vector3(
-    player.position.x,
-    player.position.y + 5,
-    player.position.z + 10
-  );
-
-  camera.position.lerp(cameraTarget, 0.09);
-
-  camera.lookAt(
-    player.position.x,
-    player.position.y + 1.2,
-    player.position.z
-  );
+  updatePlayer(delta);
+  updateCamera();
 
   renderer.render(scene, camera);
 }
 
-// RESIZE
-window.addEventListener("resize", () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
+updateCamera();
+animate();
 
-// START GAME
 startStory(() => {
   console.log("MAYUSH ADVENTURE STARTED");
 });
-
-animate();
-
-console.log("NAYABASTI OPEN WORLD READY");
-
-async function setupMobileGame() {
-  if (screen.orientation && screen.orientation.lock) {
-    try {
-      await screen.orientation.lock("landscape");
-    } catch (error) {
-      console.log("Landscape lock not supported");
-    }
-  }
-}
-
-setupMobileGame();
