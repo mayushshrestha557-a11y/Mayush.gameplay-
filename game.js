@@ -1,65 +1,48 @@
 
-/* FULL SCREEN GTA STYLE CAMERA CONTROL */
+/* GTA STYLE FULL SCREEN TOUCH CAMERA */
 
-const cameraArea = document.createElement("div");
-
-Object.assign(cameraArea.style, {
-  position: "fixed",
-  inset: "0",
-  width: "100%",
-  height: "100%",
-  zIndex: "1",
-  background: "transparent",
-  touchAction: "none"
-});
-
-document.body.appendChild(cameraArea);
+renderer.domElement.style.touchAction = "none";
 
 let cameraPointer = null;
-let lastX = 0;
-let lastY = 0;
+let previousTouchX = 0;
+let previousTouchY = 0;
 
-cameraArea.addEventListener("pointerdown", (e) => {
-  // Ignore joystick and buttons
+renderer.domElement.addEventListener("pointerdown", (e) => {
   if (
     e.target.closest("button") ||
     e.target.closest("#joystick")
   ) return;
 
   cameraPointer = e.pointerId;
-  lastX = e.clientX;
-  lastY = e.clientY;
 
-  cameraArea.setPointerCapture(e.pointerId);
+  previousTouchX = e.clientX;
+  previousTouchY = e.clientY;
+
+  renderer.domElement.setPointerCapture(e.pointerId);
 });
 
-cameraArea.addEventListener("pointermove", (e) => {
+renderer.domElement.addEventListener("pointermove", (e) => {
   if (cameraPointer !== e.pointerId) return;
 
-  const dx = e.clientX - lastX;
-  const dy = e.clientY - lastY;
+  const dx = e.clientX - previousTouchX;
+  const dy = e.clientY - previousTouchY;
 
-  targetYaw -= dx * 0.010;
-  targetPitch += dy * 0.008;
+  targetYaw -= dx * 0.012;
+  targetPitch += dy * 0.009;
 
-  // Unlimited horizontal 360-degree rotation
-  // Safe vertical viewing angle
   targetPitch = THREE.MathUtils.clamp(
     targetPitch,
     -1.2,
     1.2
   );
 
-  lastX = e.clientX;
-  lastY = e.clientY;
+  previousTouchX = e.clientX;
+  previousTouchY = e.clientY;
 });
 
-function stopCameraSwipe() {
+function stopCamera() {
   cameraPointer = null;
 }
 
-cameraArea.addEventListener("pointerup", stopCameraSwipe);
-cameraArea.addEventListener("pointercancel", stopCameraSwipe);
-
-// Keep touch gestures from scrolling the webpage
-cameraArea.addEventListener("contextmenu", e => e.preventDefault());
+renderer.domElement.addEventListener("pointerup", stopCamera);
+renderer.domElement.addEventListener("pointercancel", stopCamera);
