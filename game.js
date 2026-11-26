@@ -3,7 +3,7 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.m
 
 /* =========================================
    MAYUSH.GAMEPLAY — NAYABASTI TERAI
-   THIRD PERSON + TOUCH ORBIT CAMERA
+   IPHONE TOUCH CAMERA FIX
 ========================================= */
 
 document.documentElement.style.cssText =
@@ -524,7 +524,7 @@ const hair = new THREE.Mesh(
 hair.position.y = 2.3;
 player.add(hair);
 
-/* FACE — FRONT IS LOCAL +Z */
+/* FACE */
 
 for (const eyeX of [-0.105, 0.105]) {
   const eyeWhite = new THREE.Mesh(
@@ -779,6 +779,7 @@ function releaseJoystick(e) {
 
 joystick.addEventListener("pointerup", releaseJoystick);
 joystick.addEventListener("pointercancel", releaseJoystick);
+
 joystick.addEventListener("lostpointercapture", () => {
   pointerId = null;
   moveX = 0;
@@ -809,19 +810,21 @@ window.addEventListener("keyup", e => {
   keys[e.key.toLowerCase()] = false;
 });
 
-/* CAMERA + TOUCH LOOK */
+/* =========================================
+   IPHONE CAMERA TOUCH CONTROL
+   SWIPE SCREEN TO LOOK AROUND
+========================================= */
 
 const clock = new THREE.Clock();
 let walkTime = 0;
 
-/* Independent camera orbit angles */
 let cameraYaw = 0;
 let cameraPitch = 0.68;
 const cameraDistance = 9.5;
 
-let lookPointerId = null;
-let lastLookX = 0;
-let lastLookY = 0;
+let lookTouchId = null;
+let lastTouchX = 0;
+let lastTouchY = 0;
 
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -853,56 +856,91 @@ function getRight(rotation) {
     .normalize();
 }
 
-/* Initial camera position: behind player */
+/* INITIAL CAMERA */
+
 camera.position.set(0, 6, cameraDistance);
 camera.lookAt(0, 1.2, 0);
 
-/* SWIPE EMPTY GAME SCREEN TO ROTATE CAMERA */
+/*
+  IMPORTANT:
+  Native touch events are used instead of canvas pointer events.
+  Joystick and jump touches are ignored.
+*/
 
-renderer.domElement.addEventListener("pointerdown", e => {
-  if (e.pointerType === "mouse" && e.button !== 0) return;
-  if (lookPointerId !== null) return;
+window.addEventListener("touchstart", e => {
+  if (lookTouchId !== null) return;
 
-  lookPointerId = e.pointerId;
-  lastLookX = e.clientX;
-  lastLookY = e.clientY;
+  const touch = Array.from(e.changedTouches).find(t => {
+    const element = document.elementFromPoint(
+      t.clientX,
+      t.clientY
+    );
 
-  try {
-    renderer.domElement.setPointerCapture(e.pointerId);
-  } catch (_) {}
-});
+    if (!element) return false;
 
-renderer.domElement.addEventListener("pointermove", e => {
-  if (e.pointerId !== lookPointerId) return;
+    return !element.closest("#joystick, #jump");
+  });
 
-  const dx = e.clientX - lastLookX;
-  const dy = e.clientY - lastLookY;
+  if (!touch) return;
 
-  lastLookX = e.clientX;
-  lastLookY = e.clientY;
+  lookTouchId = touch.identifier;
+  lastTouchX = touch.clientX;
+  lastTouchY = touch.clientY;
 
-  /* Horizontal swipe = rotate around player */
+}, { capture: true, passive: false });
+
+window.addEventListener("touchmove", e => {
+  if (lookTouchId === null) return;
+
+  const touch = Array.from(e.touches).find(
+    t => t.identifier === lookTouchId
+  );
+
+  if (!touch) return;
+
+  const dx = touch.clientX - lastTouchX;
+  const dy = touch.clientY - lastTouchY;
+
+  lastTouchX = touch.clientX;
+  lastTouchY = touch.clientY;
+
+  /* LEFT AND RIGHT CAMERA ROTATION */
   cameraYaw -= dx * 0.006;
 
-  /* Vertical swipe = look up/down */
+  /* UP AND DOWN CAMERA ANGLE */
   cameraPitch = THREE.MathUtils.clamp(
-    cameraPitch + dy * 0.0045,
-    0.22,
-    1.12
+    cameraPitch + dy * 0.005,
+    0.18,
+    1.25
   );
-});
 
-function stopCameraLook(e) {
-  if (e.pointerId === lookPointerId) {
-    lookPointerId = null;
+  e.preventDefault();
+
+}, { capture: true, passive: false });
+
+function finishCameraTouch(e) {
+  if (lookTouchId === null) return;
+
+  const ended = Array.from(e.changedTouches).some(
+    t => t.identifier === lookTouchId
+  );
+
+  if (ended) {
+    lookTouchId = null;
   }
 }
 
-renderer.domElement.addEventListener("pointerup", stopCameraLook);
-renderer.domElement.addEventListener("pointercancel", stopCameraLook);
-renderer.domElement.addEventListener("lostpointercapture", () => {
-  lookPointerId = null;
-});
+window.addEventListener(
+  "touchend",
+  finishCameraTouch,
+  { capture: true, passive: false }
+);
+
+window.addEventListener(
+  "touchcancel",
+  finishCameraTouch,
+  { capture: true, passive: false }
+);
 
 /* REMOVE LOADING */
 
@@ -936,7 +974,7 @@ function animate() {
     horizontal /= Math.max(1, inputLength);
     vertical /= Math.max(1, inputLength);
 
-    /* MOVEMENT RELATIVE TO CAMERA DIRECTION */
+    /* MOVEMENT RELATIVE TO CAMERA */
 
     const forward = getCameraForward();
     const right = getCameraRight();
@@ -953,7 +991,7 @@ function animate() {
       speed * delta
     );
 
-    /* FACE THE DIRECTION OF MOVEMENT */
+    /* FACE MOVEMENT DIRECTION */
 
     playerRotation = Math.atan2(
       direction.x,
@@ -994,7 +1032,7 @@ function animate() {
 
   player.position.y = playerHeight;
 
-  /* CAMERA FOLLOW — TOUCH CONTROLLED ORBIT */
+  /* CAMERA FOLLOW — ORBIT AROUND PLAYER */
 
   const horizontalDistance =
     cameraDistance * Math.cos(cameraPitch);
