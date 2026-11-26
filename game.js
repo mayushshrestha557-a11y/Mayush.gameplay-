@@ -1,30 +1,24 @@
-
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 
-
-/* ==========================================
-   MAYUSH.GAMEPLAY
-   NAYABASTI — REALISTIC VILLAGE UPGRADE
-   MOBILE OPTIMIZED
-========================================== */
+/* =========================================
+   MAYUSH GAMEPLAY — NAYABASTI TERAI
+   COMPLETE MOBILE 3D GAME
+========================================= */
 
 document.documentElement.style.cssText =
-  "margin:0;width:100%;height:100%;overflow:hidden;";
+  "margin:0;width:100%;height:100%;overflow:hidden";
 
 document.body.style.cssText =
-  "margin:0;width:100%;height:100%;overflow:hidden;background:#91a9ad;touch-action:none;user-select:none;";
+  "margin:0;width:100%;height:100%;overflow:hidden;background:#9bb8c2;touch-action:none;user-select:none";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9bb8c2);
-scene.fog = new THREE.Fog(0x9bb8c2, 100, 330);
+scene.fog = new THREE.Fog(0x9bb8c2, 100, 340);
 
 const camera = new THREE.PerspectiveCamera(
-  62,
-  innerWidth / innerHeight,
-  0.1,
-  450
+  62, innerWidth / innerHeight, 0.1, 500
 );
 
 const renderer = new THREE.WebGLRenderer({
@@ -41,1299 +35,1430 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 renderer.domElement.style.cssText =
-  "position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;";
+  "position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none";
 
 document.body.appendChild(renderer.domElement);
 
-/* LOADING SCREEN */
+/* LOADING */
 
 const loading = document.createElement("div");
-loading.style.cssText = `
-position:fixed;inset:0;z-index:100;
-display:flex;align-items:center;justify-content:center;
-flex-direction:column;gap:12px;
-background:#182a25;color:white;
-font-family:Arial,sans-serif;
-`;
+loading.style.cssText =
+  "position:fixed;inset:0;z-index:100;background:#182a25;color:white;display:flex;align-items:center;justify-content:center;flex-direction:column;font:14px Arial;gap:12px";
+
 loading.innerHTML = `
-<div style="font-size:28px;font-weight:900;letter-spacing:3px">MAYUSH</div>
-<div style="font-size:13px;letter-spacing:2px">LOADING NAYABASTI...</div>
-<div style="width:180px;height:4px;background:#ffffff35;border-radius:5px;overflow:hidden">
-<div id="loadbar" style="width:5%;height:100%;background:#e5c16c"></div>
-</div>
-<div id="loadtext" style="font-size:11px;color:#cbd8d0">Preparing 3D world</div>
-`;
+<div style="font-size:28px;font-weight:900">MAYUSH</div>
+<div id="loadtext">BUILDING NAYABASTI...</div>
+<div style="width:190px;height:5px;background:#555;border-radius:8px">
+<div id="loadbar" style="width:5%;height:5px;background:#e5c16c"></div>
+</div>`;
+
 document.body.appendChild(loading);
 
-function loadingStatus(message, progress) {
-  const t = document.getElementById("loadtext");
-  const b = document.getElementById("loadbar");
-  if (t) t.textContent = message;
-  if (b) b.style.width = progress + "%";
+function status(t,p) {
+  document.getElementById("loadtext").textContent=t;
+  document.getElementById("loadbar").style.width=p+"%";
 }
 
-/* LIGHTING */
+/* LIGHT */
 
-const hemi = new THREE.HemisphereLight(
-  0xdcecff,
-  0x596047,
-  1.6
-);
+const hemi = new THREE.HemisphereLight(0xdcecff,0x596047,1.6);
 scene.add(hemi);
 
-const sun = new THREE.DirectionalLight(0xffe5bd, 2.5);
-sun.position.set(-45, 85, 45);
-sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.camera.left = -100;
-sun.shadow.camera.right = 100;
-sun.shadow.camera.top = 100;
-sun.shadow.camera.bottom = -100;
-sun.shadow.camera.far = 220;
+const sun = new THREE.DirectionalLight(0xffe5bd,2.5);
+sun.position.set(-45,85,45);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-100;
+sun.shadow.camera.right=100;
+sun.shadow.camera.top=100;
+sun.shadow.camera.bottom=-100;
+sun.shadow.camera.far=220;
 scene.add(sun);
 
 /* MATERIALS */
 
-function material(color, roughness = 1, metalness = 0) {
+function mat(c,r=1,m=0) {
   return new THREE.MeshStandardMaterial({
-    color,
-    roughness,
-    metalness
+    color:c,roughness:r,metalness:m
   });
 }
 
-const MAT = {
-  grass: material(0x627d43),
-  grassLight: material(0x829653),
-  dirt: material(0x98764e),
-  sand: material(0xb69b70),
-  road: material(0x353b3d, 0.95),
-  asphalt: material(0x484b4a),
-  concrete: material(0x858782),
-  water: material(0x477f8d, 0.25),
-  tree: material(0x59432c),
-  leaves: material(0x315c32),
-  leaves2: material(0x486d37),
-  metal: material(0x60686a, 0.45, 0.4),
-  white: material(0xe5e1d5),
-  yellow: material(0xd5ad4c),
-  red: material(0x9e3829),
-  black: material(0x191a19)
+const M = {
+  grass:mat(0x71864b),
+  crop:mat(0x89994c),
+  dirt:mat(0x98764e),
+  road:mat(0x353b3d),
+  water:mat(0x477f8d,.25),
+  tree:mat(0x59432c),
+  leaf:mat(0x315c32),
+  leaf2:mat(0x486d37),
+  metal:mat(0x858d8a,.45,.4),
+  black:mat(0x191a19),
+  red:mat(0x9e3829),
+  white:mat(0xe5e1d5)
 };
 
-/* BASIC OBJECTS */
-
-function box(parent, x, y, z, sx, sy, sz, mat, shadow = true) {
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(sx, sy, sz),
-    mat
+function box(parent,x,y,z,sx,sy,sz,material) {
+  const o=new THREE.Mesh(
+    new THREE.BoxGeometry(sx,sy,sz),material
   );
-
-  mesh.position.set(x, y, z);
-  mesh.castShadow = shadow;
-  mesh.receiveShadow = true;
-  parent.add(mesh);
-  return mesh;
+  o.position.set(x,y,z);
+  o.castShadow=true;
+  o.receiveShadow=true;
+  parent.add(o);
+  return o;
 }
 
-function cylinder(parent, x, y, z, radiusTop, radiusBottom, height, mat, segments = 12) {
-  const mesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      radiusTop,
-      radiusBottom,
-      height,
-      segments
-    ),
-    mat
-  );
+/* GROUND TEXTURE */
 
-  mesh.position.set(x, y, z);
-  mesh.castShadow = true;
-  parent.add(mesh);
-  return mesh;
+const canvas=document.createElement("canvas");
+canvas.width=canvas.height=256;
+const ctx=canvas.getContext("2d");
+
+ctx.fillStyle="#71864b";
+ctx.fillRect(0,0,256,256);
+
+for(let i=0;i<4500;i++){
+  const n=50+Math.random()*70;
+  ctx.fillStyle=`rgba(${n*.7},${n+35},${n*.45},.22)`;
+  ctx.fillRect(Math.random()*256,Math.random()*256,2,2);
 }
 
-/* TERRAIN */
+const groundTexture=new THREE.CanvasTexture(canvas);
+groundTexture.wrapS=groundTexture.wrapT=THREE.RepeatWrapping;
+groundTexture.repeat.set(32,32);
+groundTexture.colorSpace=THREE.SRGBColorSpace;
 
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(500, 500, 1, 1),
-  MAT.grass
+M.grass.map=groundTexture;
+M.grass.needsUpdate=true;
+
+const ground=new THREE.Mesh(
+  new THREE.PlaneGeometry(500,500),
+  M.grass
 );
-
-ground.rotation.x = -Math.PI / 2;
-ground.position.y = -0.08;
-ground.receiveShadow = true;
+ground.rotation.x=-Math.PI/2;
+ground.position.y=-.08;
+ground.receiveShadow=true;
 scene.add(ground);
 
-/* MAIN ASPHALT ROAD */
+/* 3D GRASS */
 
-box(scene, 0, 0, 0, 12, 0.16, 420, MAT.road, false);
+function createGrass() {
+  const geo=new THREE.PlaneGeometry(.14,.68,1,2);
+  geo.translate(0,.34,0);
 
-box(scene, -6.5, 0.02, 0, 1, 0.12, 420, MAT.sand, false);
-box(scene, 6.5, 0.02, 0, 1, 0.12, 420, MAT.sand, false);
+  const material=new THREE.MeshStandardMaterial({
+    color:0x91a95b,
+    roughness:1,
+    side:THREE.DoubleSide
+  });
 
-for (let z = -200; z < 210; z += 14) {
-  box(scene, 0, 0.09, z, 0.14, 0.025, 4.2, MAT.yellow, false);
+  const count=2800;
+  const grass=new THREE.InstancedMesh(geo,material,count);
+  const dummy=new THREE.Object3D();
+
+  let n=0;
+
+  for(let i=0;i<count*2 && n<count;i++){
+    const x=(Math.random()-.5)*470;
+    const z=(Math.random()-.5)*470;
+
+    if(Math.abs(x)<7.5) continue;
+
+    dummy.position.set(x,.02,z);
+    dummy.rotation.y=Math.random()*Math.PI;
+    dummy.scale.set(
+      .65+Math.random()*.65,
+      .55+Math.random()*.8,
+      1
+    );
+
+    dummy.updateMatrix();
+    grass.setMatrixAt(n++,dummy.matrix);
+  }
+
+  grass.count=n;
+  grass.instanceMatrix.needsUpdate=true;
+  scene.add(grass);
 }
 
-/* SIDEWALKS AND VILLAGE ROADS */
+createGrass();
 
-box(scene, -11, 0, -35, 85, 0.13, 6, MAT.dirt, false);
-box(scene, 40, 0, 60, 85, 0.13, 6, MAT.dirt, false);
-box(scene, -45, 0, 125, 70, 0.13, 6, MAT.dirt, false);
-box(scene, 38, 0, -125, 75, 0.13, 6, MAT.dirt, false);
+/* ROAD */
+
+box(scene,0,0,0,12,.16,420,M.road);
+box(scene,-6.5,.02,0,1,.12,420,M.dirt);
+box(scene,6.5,.02,0,1,.12,420,M.dirt);
+
+for(let z=-200;z<210;z+=14){
+  box(scene,0,.09,z,.14,.025,4.2,mat(0xd5ad4c));
+}
+
+/* VILLAGE PATHS */
+
+box(scene,-11,0,-35,85,.13,6,M.dirt);
+box(scene,40,0,60,85,.13,6,M.dirt);
+box(scene,-45,0,125,70,.13,6,M.dirt);
+box(scene,38,0,-125,75,.13,6,M.dirt);
 
 /* DRAINAGE */
 
-for (const side of [-1, 1]) {
-  box(scene, side * 8.2, -0.01, 0, 0.5, 0.28, 420, MAT.concrete, false);
-  box(scene, side * 8.2, 0.08, 0, 0.3, 0.08, 420, MAT.water, false);
+for(const side of [-1,1]){
+  box(scene,side*8.2,-.01,0,.5,.28,420,mat(0x858782));
+  box(scene,side*8.2,.08,0,.3,.08,420,M.water);
 }
 
 /* FIELDS */
 
-function makeField(x, z, width, depth) {
-  box(
-    scene,
-    x,
-    0.005,
-    z,
-    width,
-    0.08,
-    depth,
-    MAT.grassLight,
-    false
-  );
+function makeField(x,z,w,d) {
+  box(scene,x,.005,z,w,.08,d,M.crop);
 
-  const rows = new THREE.Group();
+  const geo=new THREE.ConeGeometry(.13,.8,5);
+  const cropMat=mat(0x8d9c43);
+  const count=Math.floor(w/3)*Math.floor(d/4);
 
-  const cropMaterial = material(0x8d9c43);
+  const crops=new THREE.InstancedMesh(geo,cropMat,count);
+  const dummy=new THREE.Object3D();
+  let i=0;
 
-  const cropGeometry = new THREE.ConeGeometry(0.13, 0.8, 5);
-  const count = Math.floor(width / 3) * Math.floor(depth / 4);
-
-  const crops = new THREE.InstancedMesh(
-    cropGeometry,
-    cropMaterial,
-    count
-  );
-
-  const dummy = new THREE.Object3D();
-  let index = 0;
-
-  for (let px = -width / 2 + 2; px < width / 2 - 1; px += 3) {
-    for (let pz = -depth / 2 + 2; pz < depth / 2 - 1; pz += 4) {
-      dummy.position.set(
-        x + px,
-        0.4,
-        z + pz
-      );
-
-      dummy.rotation.y = Math.random() * 0.5;
-      dummy.scale.set(
-        0.7 + Math.random() * 0.4,
-        0.7 + Math.random() * 0.7,
-        0.7 + Math.random() * 0.4
-      );
-
+  for(let px=-w/2+2;px<w/2-1;px+=3){
+    for(let pz=-d/2+2;pz<d/2-1;pz+=4){
+      dummy.position.set(x+px,.4,z+pz);
+      dummy.rotation.y=Math.random()*.5;
+      dummy.scale.set(.8,1,1);
       dummy.updateMatrix();
-      crops.setMatrixAt(index++, dummy.matrix);
+      crops.setMatrixAt(i++,dummy.matrix);
     }
   }
 
-  crops.instanceMatrix.needsUpdate = true;
-  crops.castShadow = false;
-  rows.add(crops);
-  scene.add(rows);
-
-  for (const side of [-1, 1]) {
-    box(
-      scene,
-      x + side * width / 2,
-      0.12,
-      z,
-      0.45,
-      0.25,
-      depth,
-      MAT.dirt,
-      false
-    );
-
-    box(
-      scene,
-      x,
-      0.12,
-      z + side * depth / 2,
-      width,
-      0.25,
-      0.45,
-      MAT.dirt,
-      false
-    );
-  }
+  crops.instanceMatrix.needsUpdate=true;
+  scene.add(crops);
 }
 
-makeField(-75, -95, 90, 90);
-makeField(82, -80, 100, 100);
-makeField(-82, 65, 95, 100);
-makeField(83, 100, 100, 90);
-makeField(-75, 180, 90, 45);
+makeField(-75,-95,90,90);
+makeField(82,-80,100,100);
+makeField(-82,65,95,100);
+makeField(83,100,100,90);
+makeField(-75,180,90,45);
 
-/* IRRIGATION CANALS */
+/* CANALS */
 
-function canal(x, z, width, length, rotation = 0) {
-  const group = new THREE.Group();
+function canal(x,z,w,length,rotation=0){
+  const g=new THREE.Group();
+  box(g,0,.02,0,w,.12,length,M.water);
 
-  box(group, 0, 0.02, 0, width, 0.12, length, MAT.water, false);
-
-  for (const side of [-1, 1]) {
-    box(
-      group,
-      side * (width / 2 + 0.3),
-      0.03,
-      0,
-      0.55,
-      0.32,
-      length,
-      MAT.dirt,
-      false
-    );
+  for(const side of [-1,1]){
+    box(g,side*(w/2+.3),.03,0,.55,.32,length,M.dirt);
   }
 
-  group.position.set(x, 0, z);
-  group.rotation.y = rotation;
-  scene.add(group);
+  g.position.set(x,0,z);
+  g.rotation.y=rotation;
+  scene.add(g);
 }
 
-canal(-125, 0, 2.5, 360);
-canal(130, 20, 2.5, 350);
-canal(0, -165, 2.2, 250, Math.PI / 2);
+canal(-125,0,2.5,360);
+canal(130,20,2.5,350);
+canal(0,-165,2.2,250,Math.PI/2);
 
 /* PONDS */
 
-function pond(x, z, rx, rz) {
-  const water = new THREE.Mesh(
-    new THREE.CircleGeometry(1, 48),
-    MAT.water
+function pond(x,z,rx,rz){
+  const water=new THREE.Mesh(
+    new THREE.CircleGeometry(1,48),M.water
   );
-
-  water.rotation.x = -Math.PI / 2;
-  water.scale.set(rx, rz, 1);
-  water.position.set(x, 0.04, z);
+  water.rotation.x=-Math.PI/2;
+  water.scale.set(rx,rz,1);
+  water.position.set(x,.04,z);
   scene.add(water);
-
-  const edge = new THREE.Mesh(
-    new THREE.RingGeometry(0.94, 1.12, 48),
-    MAT.sand
-  );
-
-  edge.rotation.x = -Math.PI / 2;
-  edge.scale.set(rx, rz, 1);
-  edge.position.set(x, 0.025, z);
-  scene.add(edge);
 }
 
-pond(-48, -20, 12, 8);
-pond(55, 145, 15, 10);
+pond(-48,-20,12,8);
+pond(55,145,15,10);
 
-/* EXTERNAL 3D ASSETS */
+/* EXTERNAL 3D MODELS */
 
-const BASE =
-  "https://raw.githubusercontent.com/trebeljahr/quaternius-showcase/main/public/glb/";
+const BASE="https://raw.githubusercontent.com/trebeljahr/quaternius-showcase/main/public/glb/";
 
-const ASSETS = {
-  farmer: BASE + "modular_men/Farmer.glb",
-  casual: BASE + "modular_men/Casual.glb",
-  worker: BASE + "modular_men/Worker.glb",
-  house1: BASE + "buildings_pack_2/House1.glb",
-  house2: BASE + "buildings_pack_2/House2.glb",
-  building: BASE + "buildings_pack_2/Building2_Small.glb"
+const ASSETS={
+  farmer:BASE+"modular_men/Farmer.glb",
+  casual:BASE+"modular_men/Casual.glb",
+  worker:BASE+"modular_men/Worker.glb",
+  house1:BASE+"buildings_pack_2/House1.glb",
+  house2:BASE+"buildings_pack_2/House2.glb",
+  treeA:BASE+"nature_pack/CommonTree_1.glb",
+  treeB:BASE+"nature_pack/Willow_1.glb"
 };
 
-const loader = new GLTFLoader();
-const assetCache = {};
+const loader=new GLTFLoader();
+const cache={};
 
-function loadModel(url) {
-  return new Promise((resolve, reject) => {
-    loader.load(
-      url,
-      gltf => resolve(gltf),
-      undefined,
-      error => reject(error)
-    );
+function loadModel(url){
+  return new Promise((resolve,reject)=>{
+    loader.load(url,resolve,undefined,reject);
   });
 }
 
-async function prepareAssets() {
-  const names = Object.keys(ASSETS);
+async function prepareAssets(){
+  const names=Object.keys(ASSETS);
+  let done=0;
 
-  for (let i = 0; i < names.length; i++) {
-    const name = names[i];
+  await Promise.all(names.map(async name=>{
+    try{
+      const timeout=new Promise((_,reject)=>
+        setTimeout(()=>reject(Error("Timeout")),9000)
+      );
 
-    loadingStatus(
-      "Loading " + name + " 3D model",
-      10 + Math.round((i / names.length) * 75)
-    );
+      const result=await Promise.race([
+        loadModel(ASSETS[name]),timeout
+      ]);
 
-    try {
-      assetCache[name] = await loadModel(ASSETS[name]);
-    } catch (error) {
-      console.warn("3D model could not load:", name, error);
-      assetCache[name] = null;
+      cache[name]=result;
+    }catch(e){
+      console.warn("Using fallback:",name,e);
+      cache[name]=null;
     }
-  }
+
+    done++;
+    status("Loading 3D assets "+done+"/"+names.length,
+      10+Math.round(done/names.length*75));
+  }));
 }
 
-/* NORMALIZE 3D MODEL */
+function makeAsset(name,height){
+  const source=cache[name];
+  if(!source) return null;
 
-function makeAsset(name, targetHeight, targetWidth = null) {
-  const source = assetCache[name];
-  if (!source) return null;
+  const model=SkeletonUtils.clone(source.scene);
 
-  const model = SkeletonUtils.clone(source.scene);
-
-  model.traverse(object => {
-    if (object.isMesh) {
-      object.castShadow = true;
-      object.receiveShadow = true;
-
-      if (object.material) {
-        object.material.side = THREE.FrontSide;
-      }
+  model.traverse(o=>{
+    if(o.isMesh){
+      o.castShadow=true;
+      o.receiveShadow=true;
     }
   });
 
-  let bounds = new THREE.Box3().setFromObject(model);
-  const size = new THREE.Vector3();
+  const bounds=new THREE.Box3().setFromObject(model);
+  const size=new THREE.Vector3();
   bounds.getSize(size);
 
-  if (size.y <= 0) return null;
+  if(size.y<=0) return null;
 
-  let scale = targetHeight / size.y;
+  model.scale.setScalar(height/size.y);
 
-  if (targetWidth && size.x > 0) {
-    scale = Math.min(scale, targetWidth / size.x);
-  }
+  const newBounds=new THREE.Box3().setFromObject(model);
+  const center=new THREE.Vector3();
+  newBounds.getCenter(center);
 
-  model.scale.setScalar(scale);
-
-  bounds = new THREE.Box3().setFromObject(model);
-
-  const center = new THREE.Vector3();
-  bounds.getCenter(center);
-
-  model.position.x -= center.x;
-  model.position.z -= center.z;
-  model.position.y -= bounds.min.y;
+  model.position.x-=center.x;
+  model.position.z-=center.z;
+  model.position.y-=newBounds.min.y;
 
   return model;
 }
 
-/* REAL 3D HOUSES */
+/* HOUSES */
 
-function placeHouse(name, x, z, height, width, rotation = 0) {
-  const model = makeAsset(name, height, width);
+function makeHouse(name,x,z){
+  let house=makeAsset(name,8);
 
-  if (!model) {
-    console.warn("House model unavailable:", name);
-    return;
+  if(!house){
+    house=new THREE.Group();
+
+    const wall=mat(0xc9b18c);
+    const roof=mat(0x704333);
+    const door=mat(0x493126);
+    const windowMat=mat(0x78a4b0,.25);
+
+    box(house,0,2.2,0,13,4.4,9,wall);
+    box(house,0,4.7,0,14,.3,10,roof);
+    box(house,0,1.1,4.55,1.5,2.2,.1,door);
+
+    for(const side of [-1,1]){
+      box(house,side*3,2.8,4.6,1.6,1.1,.1,windowMat);
+    }
   }
 
-  model.position.x += x;
-  model.position.z += z;
-  model.rotation.y = rotation;
-  scene.add(model);
+  house.position.set(x,0,z);
+  scene.add(house);
 }
 
-function createVillageBuildings() {
-  const houses = [
-    ["house1", -23, -85, 9, 15],
-    ["house2", 24, -105, 8, 14],
-    ["house1", -25, -45, 8, 13],
-    ["house2", 25, -15, 8, 14],
-    ["house1", -26, 35, 8, 13],
-    ["house2", 25, 75, 8, 14],
-    ["house1", -25, 105, 8, 13],
-    ["house2", 25, 145, 8, 14],
-    ["house1", -25, 175, 8, 13],
-    ["building", -42, -100, 7, 12],
-    ["building", 43, -65, 7, 12],
-    ["building", -45, 55, 7, 12],
-    ["building", 45, 110, 7, 12]
-  ];
+const housePositions=[
+  [-23,-85,"house1"],[24,-105,"house2"],
+  [-25,-45,"house1"],[25,-15,"house2"],
+  [-26,35,"house1"],[25,75,"house2"],
+  [-25,105,"house1"],[25,145,"house2"],
+  [-25,175,"house1"],[-42,-100,"house2"],
+  [43,-65,"house1"],[-45,55,"house2"],
+  [45,110,"house1"]
+];
 
-  for (const h of houses) {
-    placeHouse(h[0], h[1], h[2], h[3], h[4]);
-  }
+function createHouses(){
+  for(const h of housePositions) makeHouse(h[2],h[0],h[1]);
 }
 
 /* TREES */
 
-function makeTree(x, z, scale = 1) {
-  const group = new THREE.Group();
+function makeTree(x,z,scale=1){
+  const name=Math.random()>.5?"treeA":"treeB";
+  let tree=makeAsset(name,7*scale);
 
-  cylinder(
-    group,
-    0,
-    1.5 * scale,
-    0,
-    0.3 * scale,
-    0.4 * scale,
-    3 * scale,
-    MAT.tree
-  );
+  if(!tree){
+    tree=new THREE.Group();
 
-  const crownPositions = [
-    [0, 3.4, 0],
-    [-0.9, 3.1, 0.3],
-    [0.8, 3.2, -0.3],
-    [0.3, 4.1, 0.2],
-    [-0.5, 4, -0.4]
-  ];
-
-  crownPositions.forEach((p, i) => {
-    const crown = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(1.1 * scale, 2),
-      i % 2 ? MAT.leaves : MAT.leaves2
+    const trunk=new THREE.Mesh(
+      new THREE.CylinderGeometry(.18*scale,.32*scale,3.8*scale,10),
+      M.tree
     );
+    trunk.position.y=1.9*scale;
+    tree.add(trunk);
 
-    crown.position.set(
-      p[0] * scale,
-      p[1] * scale,
-      p[2] * scale
-    );
+    for(let i=0;i<13;i++){
+      const crown=new THREE.Mesh(
+        new THREE.IcosahedronGeometry((.8+Math.random()*.6)*scale,1),
+        i%2?M.leaf:M.leaf2
+      );
 
-    crown.scale.set(1.1, 0.8, 1);
-    crown.castShadow = true;
-    group.add(crown);
-  });
+      const a=i*2.399;
+      crown.position.set(
+        Math.cos(a)*1.05*scale,
+        (3.2+Math.random()*2.1)*scale,
+        Math.sin(a)*1.05*scale
+      );
 
-  group.position.set(x, 0, z);
-  scene.add(group);
+      crown.scale.set(1.12,.9,1.05);
+      tree.add(crown);
+    }
+  }
+
+  tree.position.set(x,0,z);
+  tree.rotation.y=Math.random()*Math.PI*2;
+  scene.add(tree);
 }
 
-for (let i = 0; i < 65; i++) {
-  const x = (Math.random() - 0.5) * 180;
-  const z = (Math.random() - 0.5) * 230;
-
-  if (Math.abs(x) > 10) {
-    makeTree(x, z, 0.8 + Math.random() * 0.8);
+function createTrees(){
+  for(let i=0;i<65;i++){
+    const x=(Math.random()-.5)*180;
+    const z=(Math.random()-.5)*230;
+    if(Math.abs(x)>10) makeTree(x,z,.8+Math.random()*.8);
   }
 }
 
 /* BANANA TREES */
 
-function bananaTree(x, z) {
-  const group = new THREE.Group();
+function bananaTree(x,z){
+  const g=new THREE.Group();
 
-  cylinder(group, 0, 1.3, 0, 0.16, 0.2, 2.6, MAT.tree);
+  const trunk=new THREE.Mesh(
+    new THREE.CylinderGeometry(.16,.2,2.6,12),M.tree
+  );
+  trunk.position.y=1.3;
+  g.add(trunk);
 
-  for (let i = 0; i < 7; i++) {
-    const leaf = new THREE.Mesh(
-      new THREE.ConeGeometry(0.35, 3.6, 7),
-      MAT.leaves
+  for(let i=0;i<7;i++){
+    const leaf=new THREE.Mesh(
+      new THREE.ConeGeometry(.35,3.6,7),M.leaf
     );
-
-    leaf.position.y = 2.6;
-    leaf.rotation.z = Math.PI / 2.4;
-    leaf.rotation.y = i * 0.9;
-    leaf.scale.set(0.55, 1, 0.25);
-    group.add(leaf);
+    leaf.position.y=2.6;
+    leaf.rotation.z=Math.PI/2.4;
+    leaf.rotation.y=i*.9;
+    leaf.scale.set(.55,1,.25);
+    g.add(leaf);
   }
 
-  group.position.set(x, 0, z);
-  scene.add(group);
-}
-
-for (let i = 0; i < 15; i++) {
-  bananaTree(
-    15 + Math.random() * 45,
-    -90 + Math.random() * 180
-  );
-}
-
-/* ELECTRIC POLES */
-
-function electricPole(x, z) {
-  cylinder(scene, x, 4, z, 0.13, 0.18, 8, MAT.concrete);
-
-  box(scene, x, 7.5, z, 2.8, 0.15, 0.15, MAT.tree);
-
-  for (let i = -1; i <= 1; i++) {
-    cylinder(
-      scene,
-      x + i * 1.1,
-      7.8,
-      z,
-      0.07,
-      0.07,
-      0.4,
-      MAT.metal
-    );
-  }
-}
-
-for (let z = -100; z <= 110; z += 35) {
-  electricPole(-7, z);
-  electricPole(7, z);
-}
-
-function wire(x1, z1, x2, z2) {
-  const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(x1, 7.7, z1),
-    new THREE.Vector3((x1 + x2) / 2, 7.1, (z1 + z2) / 2),
-    new THREE.Vector3(x2, 7.7, z2)
-  ]);
-
-  const cable = new THREE.Mesh(
-    new THREE.TubeGeometry(curve, 16, 0.025, 5, false),
-    MAT.black
-  );
-
-  scene.add(cable);
-}
-
-for (let z = -100; z < 110; z += 35) {
-  wire(-7, z, -7, z + 35);
-  wire(7, z, 7, z + 35);
-}
-
-/* TEA SHOP */
-
-function teaShop(x, z) {
-  const g = new THREE.Group();
-
-  box(g, 0, 1.5, 0, 8, 3, material(0x9c6342));
-  box(g, 0, 3.1, 0, 8.7, 0.25, material(0x5a3024));
-  box(g, 0, 1.8, -3.05, 3.2, 1.3, MAT.tree);
-  box(g, 0, 1.15, -3.5, 2.2, 0.15, MAT.tree);
-  box(g, -2.7, 0.9, -3.05, 1.2, 1.8, MAT.black);
-
-  g.position.set(x, 0, z);
+  g.position.set(x,0,z);
   scene.add(g);
 }
 
-teaShop(-17, 18);
+for(let i=0;i<15;i++){
+  bananaTree(15+Math.random()*45,-90+Math.random()*180);
+}
 
-/* SCHOOL */
+/* PLAYER AND NPC — PART 2 CONTINUES */
 
-function school(x, z) {
-  const g = new THREE.Group();
+/* =========================================
+   PLAYER CHARACTER
+========================================= */
 
-  box(g, 0, 2.2, 0, 18, 4.4, 10, MAT.white);
-  box(g, 0, 4.5, 0, 19, 0.35, 11, MAT.red);
+function makeFallbackHuman(kind="casual") {
+  const group=new THREE.Group();
 
-  for (let i = -2; i <= 2; i++) {
-    box(g, i * 3.2, 2.6, -5.1, 2, 1.5, 0.15, material(0x4a849c));
+  const skin=mat(0xb77e5b);
+  const shirts={
+    farmer:0x527342,
+    casual:0x426b9a,
+    worker:0xb78a37
+  };
+
+  const shirt=mat(shirts[kind]||0x8b4b3e);
+  const pants=mat(0x343b49);
+  const shoes=mat(0x242321);
+  const hair=mat(0x211b18);
+
+  function capsule(parent,radius,length,material,x,y,z){
+    const mesh=new THREE.Mesh(
+      new THREE.CapsuleGeometry(radius,length,4,8),
+      material
+    );
+    mesh.position.set(x,y,z);
+    mesh.castShadow=true;
+    parent.add(mesh);
+    return mesh;
   }
 
-  box(g, 0, 1.2, -5.1, 3, 2.4, 0.15, MAT.tree);
+  // Legs
+  capsule(group,.105,.52,pants,-.15,.60,0);
+  capsule(group,.105,.52,pants,.15,.60,0);
 
-  g.position.set(x, 0, z);
-  scene.add(g);
-}
+  // Shoes
+  for(const side of [-1,1]){
+    const foot=new THREE.Mesh(
+      new THREE.SphereGeometry(.13,12,8),
+      shoes
+    );
+    foot.scale.set(.9,.55,1.5);
+    foot.position.set(side*.15,.12,.1);
+    group.add(foot);
+  }
 
-school(35, -30);
+  // Body
+  capsule(group,.25,.5,shirt,0,1.34,0);
 
-/* HAYSTACKS */
-
-function haystack(x, z) {
-  const hay = new THREE.Mesh(
-    new THREE.ConeGeometry(1.1, 1.7, 12),
-    material(0xb69a55)
+  // Neck
+  const neck=new THREE.Mesh(
+    new THREE.CylinderGeometry(.075,.085,.16,10),
+    skin
   );
+  neck.position.y=1.72;
+  group.add(neck);
 
-  hay.position.set(x, 0.85, z);
-  hay.castShadow = true;
-  scene.add(hay);
-}
-
-haystack(-34, -78);
-haystack(37, 82);
-haystack(-38, 115);
-
-/* CLAY POTS */
-
-function clayPot(x, z) {
-  const pot = new THREE.Mesh(
-    new THREE.SphereGeometry(0.35, 16, 12),
-    material(0x985536)
+  // Head
+  const head=new THREE.Mesh(
+    new THREE.SphereGeometry(.19,16,12),
+    skin
   );
+  head.position.y=1.96;
+  head.castShadow=true;
+  group.add(head);
 
-  pot.position.set(x, 0.34, z);
-  pot.scale.set(1, 1.1, 1);
-  pot.castShadow = true;
-  scene.add(pot);
+  // Hair
+  const hairCap=new THREE.Mesh(
+    new THREE.SphereGeometry(
+      .195,14,8,0,Math.PI*2,0,Math.PI*.48
+    ),
+    hair
+  );
+  hairCap.position.y=2.015;
+  group.add(hairCap);
+
+  // Arms
+  for(const side of [-1,1]){
+    const arm=new THREE.Group();
+    arm.position.set(side*.31,1.49,0);
+    group.add(arm);
+
+    capsule(arm,.082,.42,shirt,0,-.25,0);
+
+    const hand=new THREE.Mesh(
+      new THREE.SphereGeometry(.08,10,8),
+      skin
+    );
+    hand.position.set(0,-.52,0);
+    arm.add(hand);
+  }
+
+  return group;
 }
 
-clayPot(-17, -79);
-clayPot(30, -99);
-clayPot(-18, 41);
-clayPot(31, 71);
+function addCharacterModel(name,root,height){
+  const model=makeAsset(name,height);
 
-/* PLAYER */
+  if(model){
+    root.add(model);
+  }else{
+    const fallback=makeFallbackHuman(name);
+    fallback.scale.setScalar(height/2.15);
+    root.add(fallback);
+  }
 
-const player = new THREE.Group();
-scene.add(player);
-
-let playerModelReady = false;
-
-function addCharacterModel(name, root, height) {
-  const model = makeAsset(name, height);
-
-  if (!model) return false;
-
-  root.add(model);
   return true;
 }
 
+/* PLAYER */
+
+const player=new THREE.Group();
+scene.add(player);
+
+addCharacterModel("farmer",player,2.05);
+
+player.position.set(0,0,0);
+player.rotation.y=Math.PI;
+
+let playerSpeed=0;
+let jumpVelocity=0;
+let isJumping=false;
+
 /* VILLAGERS */
 
-const villagers = [];
+const villagers=[];
 
-function addVillager(name, x, z, height = 1.9) {
-  const npc = new THREE.Group();
+function addVillager(name,x,z,height=1.9){
+  const npc=new THREE.Group();
 
-  const loaded = addCharacterModel(name, npc, height);
+  addCharacterModel(name,npc,height);
 
-  if (!loaded) return;
-
-  npc.position.set(x, 0, z);
+  npc.position.set(x,0,z);
   scene.add(npc);
 
   villagers.push({
-    mesh: npc,
-    x,
-    z,
-    phase: Math.random() * 10
+    mesh:npc,
+    x,z,
+    phase:Math.random()*10
   });
 }
 
-/* VEHICLE WHEELS */
+addVillager("casual",8,15);
+addVillager("worker",-12,30);
+addVillager("casual",30,-20);
+addVillager("worker",-30,-25);
+addVillager("casual",45,65);
+addVillager("farmer",-42,12);
+addVillager("worker",18,92);
+addVillager("casual",-18,-115);
 
-function makeWheel(parent, x, y, z, radius) {
-  const wheel = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius, radius, 0.22, 18),
-    MAT.black
+/* =========================================
+   VEHICLES
+========================================= */
+
+function makeWheel(parent,x,y,z,radius){
+  const tire=new THREE.Mesh(
+    new THREE.CylinderGeometry(radius,radius,.24,24),
+    M.black
   );
 
-  wheel.rotation.z = Math.PI / 2;
-  wheel.position.set(x, y, z);
-  wheel.castShadow = true;
-  parent.add(wheel);
+  tire.rotation.z=Math.PI/2;
+  tire.position.set(x,y,z);
+  tire.castShadow=true;
+  parent.add(tire);
 
-  const hub = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius * 0.35, radius * 0.35, 0.24, 12),
-    MAT.metal
+  const rim=new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      radius*.56,radius*.56,.255,20
+    ),
+    M.metal
   );
 
-  hub.rotation.z = Math.PI / 2;
-  hub.position.copy(wheel.position);
+  rim.rotation.z=Math.PI/2;
+  rim.position.copy(tire.position);
+  parent.add(rim);
+
+  const hub=new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      radius*.18,radius*.18,.27,14
+    ),
+    M.metal
+  );
+
+  hub.rotation.z=Math.PI/2;
+  hub.position.copy(tire.position);
   parent.add(hub);
 
-  return wheel;
+  return tire;
 }
+
+const traffic=[];
 
 /* TRACTOR */
 
-const traffic = [];
+function makeTractor(x,z,direction=1){
+  const group=new THREE.Group();
+  const wheels=[];
 
-function makeTractor(x, z, direction = 1) {
-  const g = new THREE.Group();
-  const wheels = [];
+  const green=mat(0x28743b,.68);
+  const darkGreen=mat(0x174d2b,.8);
+  const metal=mat(0x858d8a,.42,.45);
 
-  box(g, 0, 0.8, 0, 1.3, 0.35, 2.5, MAT.tree);
-  box(g, 0, 1.25, 0.65, 1.2, 0.7, 1.1, material(0x347744));
-  box(g, 0, 1.35, -0.55, 0.6, 0.2, 0.55, MAT.black);
+  const chassis=new THREE.Mesh(
+    new THREE.CapsuleGeometry(.42,1.45,5,12),
+    darkGreen
+  );
 
-  cylinder(g, -0.35, 1.9, 0.8, 0.06, 0.07, 0.8, MAT.metal);
+  chassis.rotation.x=Math.PI/2;
+  chassis.scale.set(1,.66,1);
+  chassis.position.set(0,.82,.05);
+  group.add(chassis);
 
-  for (const side of [-1, 1]) {
-    wheels.push(makeWheel(g, side * 0.75, 0.55, -0.75, 0.55));
-    wheels.push(makeWheel(g, side * 0.75, 0.4, 0.95, 0.37));
+  const bonnet=new THREE.Mesh(
+    new THREE.CylinderGeometry(.47,.56,1.35,20),
+    green
+  );
+
+  bonnet.rotation.x=Math.PI/2;
+  bonnet.position.set(0,1.15,.72);
+  bonnet.castShadow=true;
+  group.add(bonnet);
+
+  const nose=new THREE.Mesh(
+    new THREE.CylinderGeometry(.42,.47,.14,18),
+    darkGreen
+  );
+
+  nose.rotation.x=Math.PI/2;
+  nose.position.set(0,1.15,1.43);
+  group.add(nose);
+
+  // Front grille
+  for(let i=-3;i<=3;i++){
+    const bar=new THREE.Mesh(
+      new THREE.CylinderGeometry(.018,.018,.62,6),
+      metal
+    );
+
+    bar.position.set(i*.085,1.15,1.51);
+    group.add(bar);
   }
 
-  const trailer = new THREE.Group();
+  for(const side of [-1,1]){
+    const lamp=new THREE.Mesh(
+      new THREE.SphereGeometry(.105,12,8),
+      mat(0xffe7a1)
+    );
 
-  box(trailer, 0, 0.9, 0, 1.8, 0.25, 2.5, MAT.red);
+    lamp.position.set(side*.36,1.37,1.45);
+    group.add(lamp);
 
-  for (const side of [-1, 1]) {
-    box(trailer, side * 0.85, 1.4, 0, 0.12, 0.8, 2.5, MAT.red);
-    wheels.push(makeWheel(trailer, side * 0.95, 0.45, 0, 0.34));
+    const fender=new THREE.Mesh(
+      new THREE.TorusGeometry(.62,.075,8,24,Math.PI),
+      green
+    );
+
+    fender.rotation.z=Math.PI;
+    fender.position.set(side*.72,.58,-.68);
+    group.add(fender);
+
+    wheels.push(
+      makeWheel(group,side*.77,.58,-.68,.57),
+      makeWheel(group,side*.69,.4,1,.38)
+    );
   }
 
-  trailer.position.z = -2.4;
-  g.add(trailer);
+  const seat=new THREE.Mesh(
+    new THREE.CapsuleGeometry(.18,.28,4,10),
+    M.black
+  );
 
-  g.position.set(x, 0, z);
-  g.rotation.y = direction > 0 ? 0 : Math.PI;
-  scene.add(g);
+  seat.position.set(0,1.55,-.58);
+  group.add(seat);
+
+  const steering=new THREE.Mesh(
+    new THREE.TorusGeometry(.23,.025,8,18),
+    metal
+  );
+
+  steering.position.set(0,1.48,.02);
+  steering.rotation.x=.55;
+  group.add(steering);
+
+  const exhaust=new THREE.Mesh(
+    new THREE.CylinderGeometry(.045,.055,.95,10),
+    metal
+  );
+
+  exhaust.position.set(-.34,1.86,.88);
+  group.add(exhaust);
+
+  // Trailer
+  const trailer=new THREE.Group();
+
+  const bed=new THREE.Mesh(
+    new THREE.BoxGeometry(1.9,.18,2.55),
+    M.red
+  );
+
+  bed.position.y=.95;
+  trailer.add(bed);
+
+  for(const side of [-1,1]){
+    const rail=new THREE.Mesh(
+      new THREE.BoxGeometry(.1,.62,2.55),
+      M.red
+    );
+
+    rail.position.set(side*.9,1.28,0);
+    trailer.add(rail);
+
+    wheels.push(
+      makeWheel(trailer,side*1.0,.46,0,.34)
+    );
+  }
+
+  for(let i=0;i<6;i++){
+    const sack=new THREE.Mesh(
+      new THREE.SphereGeometry(.24,10,8),
+      mat(0xb99a58)
+    );
+
+    sack.scale.set(1,.8,1.5);
+    sack.position.set(
+      -.55+(i%3)*.55,
+      1.16,
+      -.65+Math.floor(i/3)*.65
+    );
+
+    trailer.add(sack);
+  }
+
+  trailer.position.z=-2.55;
+  group.add(trailer);
+
+  group.position.set(x,0,z);
+  group.rotation.y=direction>0?0:Math.PI;
+
+  scene.add(group);
 
   traffic.push({
-    mesh: g,
+    mesh:group,
     wheels,
-    speed: direction * 3.2
+    speed:direction*3.2
   });
 }
 
 /* MOTORCYCLE */
 
-function makeMotorcycle(x, z, direction = 1) {
-  const g = new THREE.Group();
-  const wheels = [];
+function makeMotorcycle(x,z,direction=1){
+  const group=new THREE.Group();
+  const wheels=[];
 
-  box(g, 0, 0.8, 0, 0.25, 0.25, 1.5, MAT.metal);
-  box(g, 0, 1.1, 0.2, 0.7, 0.4, 0.65, MAT.red);
-  box(g, 0, 1.15, -0.45, 0.5, 0.14, 0.7, MAT.black);
+  const frame=mat(0x343a3b,.5,.45);
+  const red=mat(0xa52e25,.55);
+  const chrome=mat(0x9ca5a5,.35,.7);
 
-  wheels.push(makeWheel(g, 0, 0.42, 0.8, 0.4));
-  wheels.push(makeWheel(g, 0, 0.42, -0.8, 0.4));
+  wheels.push(
+    makeWheel(group,0,.43,.86,.39),
+    makeWheel(group,0,.43,-.86,.39)
+  );
 
-  box(g, 0, 1.45, 0.75, 1, 0.08, 0.08, MAT.metal);
+  const tank=new THREE.Mesh(
+    new THREE.SphereGeometry(.42,16,12),
+    red
+  );
 
-  g.position.set(x, 0, z);
-  g.rotation.y = direction > 0 ? 0 : Math.PI;
-  scene.add(g);
+  tank.scale.set(.72,.65,1.05);
+  tank.position.set(0,1.02,.05);
+  group.add(tank);
+
+  const seat=new THREE.Mesh(
+    new THREE.CapsuleGeometry(.17,.58,4,10),
+    M.black
+  );
+
+  seat.rotation.x=Math.PI/2;
+  seat.position.set(0,1.13,-.55);
+  group.add(seat);
+
+  const engine=new THREE.Mesh(
+    new THREE.CylinderGeometry(.24,.24,.42,12),
+    mat(0x777d7c,.4,.55)
+  );
+
+  engine.rotation.z=Math.PI/2;
+  engine.position.set(0,.72,-.12);
+  group.add(engine);
+
+  for(const side of [-1,1]){
+    const fork=new THREE.Mesh(
+      new THREE.CylinderGeometry(.035,.045,.83,8),
+      chrome
+    );
+
+    fork.position.set(side*.09,.87,.65);
+    fork.rotation.x=-.18;
+    group.add(fork);
+  }
+
+  const handle=new THREE.Mesh(
+    new THREE.CylinderGeometry(.035,.035,.78,8),
+    chrome
+  );
+
+  handle.rotation.z=Math.PI/2;
+  handle.position.set(0,1.35,.68);
+  group.add(handle);
+
+  const lamp=new THREE.Mesh(
+    new THREE.SphereGeometry(.15,12,10),
+    mat(0xffe8b4)
+  );
+
+  lamp.position.set(0,1.25,.89);
+  group.add(lamp);
+
+  const exhaust=new THREE.Mesh(
+    new THREE.CylinderGeometry(.055,.07,.85,10),
+    chrome
+  );
+
+  exhaust.rotation.x=Math.PI/2;
+  exhaust.position.set(.22,.64,-.18);
+  group.add(exhaust);
+
+  group.position.set(x,0,z);
+  group.rotation.y=direction>0?0:Math.PI;
+
+  scene.add(group);
 
   traffic.push({
-    mesh: g,
+    mesh:group,
     wheels,
-    speed: direction * 6
+    speed:direction*5.8
   });
 }
 
-makeTractor(-2.5, -155, 1);
-makeMotorcycle(2.5, 145, -1);
-makeMotorcycle(-2.5, -65, 1);
+/* CAR */
 
-/* BIRDS */
+function makeCar(x,z,direction=1){
+  const group=new THREE.Group();
+  const wheels=[];
 
-const birds = [];
+  const bodyMat=mat(0x315d86,.48,.18);
 
-for (let i = 0; i < 8; i++) {
-  const bird = new THREE.Group();
+  const glass=new THREE.MeshStandardMaterial({
+    color:0x9fc6d1,
+    roughness:.18,
+    metalness:.25,
+    transparent:true,
+    opacity:.72
+  });
 
-  for (const side of [-1, 1]) {
-    const wing = new THREE.Mesh(
-      new THREE.BoxGeometry(0.9, 0.05, 0.25),
-      MAT.black
+  const body=new THREE.Mesh(
+    new THREE.CapsuleGeometry(.58,1.55,5,16),
+    bodyMat
+  );
+
+  body.rotation.x=Math.PI/2;
+  body.scale.set(1,.72,1);
+  body.position.y=.82;
+  body.castShadow=true;
+  group.add(body);
+
+  const cabin=new THREE.Mesh(
+    new THREE.CapsuleGeometry(.44,.8,5,14),
+    glass
+  );
+
+  cabin.rotation.x=Math.PI/2;
+  cabin.scale.set(.94,.75,.9);
+  cabin.position.set(0,1.38,-.13);
+  group.add(cabin);
+
+  for(const side of [-1,1]){
+    wheels.push(
+      makeWheel(group,side*.58,.47,.78,.31),
+      makeWheel(group,side*.58,.47,-.78,.31)
     );
 
-    wing.position.x = side * 0.4;
-    bird.add(wing);
+    const headlamp=new THREE.Mesh(
+      new THREE.SphereGeometry(.1,10,8),
+      mat(0xffedbd)
+    );
+
+    headlamp.position.set(side*.39,.82,1.52);
+    group.add(headlamp);
+
+    const tailLamp=new THREE.Mesh(
+      new THREE.SphereGeometry(.09,10,8),
+      mat(0xb52b21)
+    );
+
+    tailLamp.position.set(side*.39,.82,-1.5);
+    group.add(tailLamp);
+  }
+
+  group.position.set(x,0,z);
+  group.rotation.y=direction>0?0:Math.PI;
+
+  scene.add(group);
+
+  traffic.push({
+    mesh:group,
+    wheels,
+    speed:direction*7.5
+  });
+}
+
+/* VEHICLE SPAWN */
+
+makeTractor(-2.5,-155,1);
+makeCar(2.5,-105,-1);
+makeMotorcycle(2.5,145,-1);
+makeMotorcycle(-2.5,-65,1);
+
+/* =========================================
+   BIRDS
+========================================= */
+
+const birds=[];
+
+for(let i=0;i<9;i++){
+  const bird=new THREE.Group();
+
+  const feather=mat(0x353a3a);
+  const belly=mat(0x77766d);
+  const beakMat=mat(0xc58c35);
+
+  const body=new THREE.Mesh(
+    new THREE.SphereGeometry(.22,12,9),
+    feather
+  );
+
+  body.scale.set(.78,.72,1.35);
+  bird.add(body);
+
+  const head=new THREE.Mesh(
+    new THREE.SphereGeometry(.13,12,9),
+    belly
+  );
+
+  head.position.set(0,.08,.28);
+  bird.add(head);
+
+  const beak=new THREE.Mesh(
+    new THREE.ConeGeometry(.055,.22,7),
+    beakMat
+  );
+
+  beak.rotation.x=-Math.PI/2;
+  beak.position.set(0,.04,.46);
+  bird.add(beak);
+
+  const tail=new THREE.Mesh(
+    new THREE.ConeGeometry(.13,.42,7),
+    feather
+  );
+
+  tail.rotation.x=Math.PI/2;
+  tail.position.z=-.34;
+  bird.add(tail);
+
+  const wings=[];
+
+  for(const side of [-1,1]){
+    const pivot=new THREE.Group();
+    pivot.position.set(side*.12,.05,.02);
+    bird.add(pivot);
+
+    const wing=new THREE.Mesh(
+      new THREE.SphereGeometry(.32,10,8),
+      feather
+    );
+
+    wing.scale.set(1.65,.12,.55);
+    wing.position.x=side*.3;
+    pivot.add(wing);
+
+    wings.push({pivot,side});
   }
 
   bird.position.set(
-    (Math.random() - 0.5) * 80,
-    14 + Math.random() * 7,
-    (Math.random() - 0.5) * 100
+    (Math.random()-.5)*85,
+    13+Math.random()*9,
+    (Math.random()-.5)*110
   );
 
   scene.add(bird);
 
   birds.push({
-    mesh: bird,
-    phase: Math.random() * 10,
-    speed: 1.5 + Math.random()
+    mesh:bird,
+    wings,
+    phase:Math.random()*10,
+    speed:1.2+Math.random()*1.4
   });
 }
 
-/* MOBILE UI */
+/* =========================================
+   MOBILE CONTROLS
+========================================= */
 
-const css = document.createElement("style");
+const controls=document.createElement("div");
 
-css.textContent = `
-#mobile-controls {
-  position:fixed;
-  inset:0;
-  z-index:20;
-  pointer-events:none;
-  font-family:Arial,sans-serif;
-}
-#joystick {
-  position:absolute;
-  left:25px;
-  bottom:25px;
-  width:125px;
-  height:125px;
-  border-radius:50%;
-  background:#ffffff30;
-  border:2px solid #ffffff99;
-  pointer-events:auto;
-  touch-action:none;
-}
-#stick {
-  position:absolute;
-  left:35px;
-  top:35px;
-  width:52px;
-  height:52px;
-  border-radius:50%;
-  background:#ffffffed;
-  box-shadow:0 3px 12px #3338;
-  pointer-events:none;
-}
-#jump {
-  position:absolute;
-  right:28px;
-  bottom:38px;
-  width:78px;
-  height:78px;
-  border-radius:50%;
-  border:2px solid white;
-  background:#246dcc;
-  color:white;
-  font-size:15px;
-  font-weight:bold;
-  pointer-events:auto;
-  touch-action:none;
-}
-#game-label {
-  position:absolute;
-  top:15px;
-  left:15px;
-  color:white;
-  font:bold 14px Arial;
-  text-shadow:0 2px 5px black;
-}
-#clock {
-  position:absolute;
-  top:15px;
-  right:15px;
-  color:white;
-  font:bold 13px Arial;
-  background:#0007;
-  padding:8px 11px;
-  border-radius:12px;
-}
-`;
-
-document.head.appendChild(css);
-
-const controls = document.createElement("div");
-controls.id = "mobile-controls";
-
-controls.innerHTML = `
-<div id="game-label">NAYABASTI • TERAI VILLAGE</div>
-<div id="clock">08:00</div>
-<div id="joystick"><div id="stick"></div></div>
-<button id="jump">JUMP</button>
+controls.style.cssText=`
+position:fixed;
+inset:0;
+z-index:20;
+pointer-events:none;
 `;
 
 document.body.appendChild(controls);
 
-const joystick = document.getElementById("joystick");
-const stick = document.getElementById("stick");
-const jumpButton = document.getElementById("jump");
+/* JOYSTICK */
 
-let moveX = 0;
-let moveY = 0;
-let pointerId = null;
+const joystick=document.createElement("div");
 
-let playerHeight = 0;
-let jumpVelocity = 0;
-let jumping = false;
+joystick.id="joystick";
 
-function updateJoystick(e) {
-  const rect = joystick.getBoundingClientRect();
+joystick.style.cssText=`
+position:absolute;
+left:25px;
+bottom:35px;
+width:125px;
+height:125px;
+border-radius:50%;
+background:rgba(20,25,25,.32);
+border:2px solid rgba(255,255,255,.55);
+pointer-events:auto;
+touch-action:none;
+`;
 
-  let dx = e.clientX - (rect.left + rect.width / 2);
-  let dy = e.clientY - (rect.top + rect.height / 2);
+const stick=document.createElement("div");
 
-  const max = 38;
-  const distance = Math.hypot(dx, dy);
+stick.style.cssText=`
+position:absolute;
+width:52px;
+height:52px;
+left:35px;
+top:35px;
+border-radius:50%;
+background:rgba(255,255,255,.7);
+border:2px solid #ffffff;
+`;
 
-  if (distance > max) {
-    dx = dx / distance * max;
-    dy = dy / distance * max;
+joystick.appendChild(stick);
+controls.appendChild(joystick);
+
+let moveX=0;
+let moveY=0;
+let joyTouch=null;
+
+function updateJoystick(e){
+  const rect=joystick.getBoundingClientRect();
+
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+
+  let dx=e.clientX-cx;
+  let dy=e.clientY-cy;
+
+  const max=43;
+  const distance=Math.sqrt(dx*dx+dy*dy);
+
+  if(distance>max){
+    dx=dx/distance*max;
+    dy=dy/distance*max;
   }
 
-  stick.style.transform = `translate(${dx}px, ${dy}px)`;
+  stick.style.left=(35+dx)+"px";
+  stick.style.top=(35+dy)+"px";
 
-  moveX = dx / max;
-  moveY = dy / max;
+  moveX=dx/max;
+  moveY=dy/max;
 }
 
-joystick.addEventListener("pointerdown", e => {
-  e.preventDefault();
-  pointerId = e.pointerId;
-  joystick.setPointerCapture(pointerId);
+joystick.addEventListener("pointerdown",e=>{
+  joyTouch=e.pointerId;
+  joystick.setPointerCapture(e.pointerId);
   updateJoystick(e);
 });
 
-joystick.addEventListener("pointermove", e => {
-  if (e.pointerId === pointerId) {
-    e.preventDefault();
-    updateJoystick(e);
-  }
+joystick.addEventListener("pointermove",e=>{
+  if(e.pointerId===joyTouch) updateJoystick(e);
 });
 
-function releaseJoystick(e) {
-  if (e.pointerId !== pointerId) return;
+function releaseJoystick(e){
+  if(e.pointerId!==joyTouch)return;
 
-  pointerId = null;
-  moveX = 0;
-  moveY = 0;
-  stick.style.transform = "translate(0,0)";
+  joyTouch=null;
+  moveX=0;
+  moveY=0;
+  stick.style.left="35px";
+  stick.style.top="35px";
 }
 
-joystick.addEventListener("pointerup", releaseJoystick);
-joystick.addEventListener("pointercancel", releaseJoystick);
+joystick.addEventListener("pointerup",releaseJoystick);
+joystick.addEventListener("pointercancel",releaseJoystick);
 
-joystick.addEventListener("lostpointercapture", () => {
-  pointerId = null;
-  moveX = 0;
-  moveY = 0;
-  stick.style.transform = "translate(0,0)";
-});
+/* JUMP BUTTON */
 
-/* JUMP */
+const jumpButton=document.createElement("button");
 
-jumpButton.addEventListener("pointerdown", e => {
+jumpButton.id="jump";
+jumpButton.textContent="JUMP";
+
+jumpButton.style.cssText=`
+position:absolute;
+right:28px;
+bottom:48px;
+width:75px;
+height:75px;
+border-radius:50%;
+border:2px solid white;
+background:rgba(220,170,60,.75);
+color:white;
+font-weight:bold;
+font-size:15px;
+pointer-events:auto;
+touch-action:none;
+`;
+
+controls.appendChild(jumpButton);
+
+function jump(){
+  if(!isJumping){
+    jumpVelocity=7.5;
+    isJumping=true;
+  }
+}
+
+jumpButton.addEventListener("pointerdown",e=>{
   e.preventDefault();
-
-  if (!jumping && playerHeight === 0) {
-    jumping = true;
-    jumpVelocity = 6.5;
-  }
+  jump();
 });
 
-/* KEYBOARD */
+/* CAMERA LOOK */
 
-const keys = {};
+let cameraYaw=0;
+let cameraPitch=.68;
+const cameraDistance=9.5;
 
-window.addEventListener("keydown", e => {
-  keys[e.key.toLowerCase()] = true;
-});
+let lookTouchId=null;
+let lastTouchX=0;
+let lastTouchY=0;
 
-window.addEventListener("keyup", e => {
-  keys[e.key.toLowerCase()] = false;
-});
+window.addEventListener("touchstart",e=>{
+  if(lookTouchId!==null)return;
 
-/* CAMERA */
-
-const clock = new THREE.Clock();
-
-let cameraYaw = 0;
-let cameraPitch = 0.68;
-const cameraDistance = 9.5;
-
-let lookTouchId = null;
-let lastTouchX = 0;
-let lastTouchY = 0;
-
-function getCameraForward() {
-  return new THREE.Vector3(
-    -Math.sin(cameraYaw),
-    0,
-    -Math.cos(cameraYaw)
-  ).normalize();
-}
-
-function getCameraRight() {
-  return new THREE.Vector3(
-    Math.cos(cameraYaw),
-    0,
-    -Math.sin(cameraYaw)
-  ).normalize();
-}
-
-camera.position.set(0, 6, cameraDistance);
-camera.lookAt(0, 1.2, 0);
-
-/* NATIVE IPHONE CAMERA TOUCH */
-
-window.addEventListener("touchstart", e => {
-  if (lookTouchId !== null) return;
-
-  const touch = Array.from(e.changedTouches).find(t => {
-    const element = document.elementFromPoint(
-      t.clientX,
-      t.clientY
+  const touch=Array.from(e.changedTouches).find(t=>{
+    const element=document.elementFromPoint(
+      t.clientX,t.clientY
     );
 
-    return element && !element.closest("#joystick, #jump");
+    return element &&
+      !element.closest("#joystick,#jump");
   });
 
-  if (!touch) return;
+  if(!touch)return;
 
-  lookTouchId = touch.identifier;
-  lastTouchX = touch.clientX;
-  lastTouchY = touch.clientY;
-}, { capture: true, passive: false });
+  lookTouchId=touch.identifier;
+  lastTouchX=touch.clientX;
+  lastTouchY=touch.clientY;
 
-window.addEventListener("touchmove", e => {
-  if (lookTouchId === null) return;
+},{capture:true,passive:false});
 
-  const touch = Array.from(e.touches).find(
-    t => t.identifier === lookTouchId
+window.addEventListener("touchmove",e=>{
+  if(lookTouchId===null)return;
+
+  const touch=Array.from(e.touches).find(
+    t=>t.identifier===lookTouchId
   );
 
-  if (!touch) return;
+  if(!touch)return;
 
-  const dx = touch.clientX - lastTouchX;
-  const dy = touch.clientY - lastTouchY;
+  const dx=touch.clientX-lastTouchX;
+  const dy=touch.clientY-lastTouchY;
 
-  lastTouchX = touch.clientX;
-  lastTouchY = touch.clientY;
+  lastTouchX=touch.clientX;
+  lastTouchY=touch.clientY;
 
-  cameraYaw -= dx * 0.006;
+  cameraYaw-=dx*.006;
 
-  cameraPitch = THREE.MathUtils.clamp(
-    cameraPitch + dy * 0.005,
-    0.18,
+  cameraPitch=THREE.MathUtils.clamp(
+    cameraPitch+dy*.005,
+    .18,
     1.25
   );
 
   e.preventDefault();
-}, { capture: true, passive: false });
 
-function finishCameraTouch(e) {
-  if (lookTouchId === null) return;
+},{capture:true,passive:false});
 
-  const ended = Array.from(e.changedTouches).some(
-    t => t.identifier === lookTouchId
-  );
-
-  if (ended) lookTouchId = null;
-}
-
-window.addEventListener("touchend", finishCameraTouch, {
-  capture: true,
-  passive: false
+window.addEventListener("touchend",e=>{
+  if(Array.from(e.changedTouches).some(
+    t=>t.identifier===lookTouchId
+  )){
+    lookTouchId=null;
+  }
 });
 
-window.addEventListener("touchcancel", finishCameraTouch, {
-  capture: true,
-  passive: false
-});
+/* =========================================
+   GAME ANIMATION
+========================================= */
 
-/* DAY / NIGHT */
+const clock=new THREE.Clock();
 
-let worldTime = 0.34;
-const dayDuration = 300;
+let elapsed=0;
 
-function updateLighting(delta) {
-  worldTime = (worldTime + delta / dayDuration) % 1;
-
-  const hour = worldTime * 24;
-  const angle = worldTime * Math.PI * 2 - Math.PI / 2;
-
-  const daylight = THREE.MathUtils.clamp(
-    Math.sin(angle) * 1.3 + 0.2,
-    0.08,
-    1
-  );
-
-  const sky = new THREE.Color(0x17263b).lerp(
-    new THREE.Color(0x9bb8c2),
-    daylight
-  );
-
-  scene.background.copy(sky);
-  scene.fog.color.copy(sky);
-
-  sun.position.set(
-    Math.cos(angle) * 85,
-    Math.max(8, Math.sin(angle) * 100),
-    45
-  );
-
-  sun.intensity = 0.2 + daylight * 2.4;
-  hemi.intensity = 0.35 + daylight * 1.35;
-
-  const h = Math.floor(hour);
-  const m = Math.floor((hour - h) * 60);
-
-  document.getElementById("clock").textContent =
-    String(h).padStart(2, "0") + ":" +
-    String(m).padStart(2, "0");
-}
-
-/* ANIMATION LOOP */
-
-let walkTime = 0;
-
-function animate() {
+function animate(){
   requestAnimationFrame(animate);
 
-  const delta = Math.min(clock.getDelta(), 0.04);
-  const elapsed = clock.elapsedTime;
+  const delta=Math.min(clock.getDelta(),.04);
+  elapsed+=delta;
 
-  let horizontal = moveX;
-  let vertical = moveY;
+  /* PLAYER MOVEMENT */
 
-  if (keys["w"] || keys["arrowup"]) vertical = -1;
-  if (keys["s"] || keys["arrowdown"]) vertical = 1;
-  if (keys["a"] || keys["arrowleft"]) horizontal = -1;
-  if (keys["d"] || keys["arrowright"]) horizontal = 1;
+  const forward=-moveY;
+  const side=moveX;
 
-  const inputLength = Math.hypot(horizontal, vertical);
+  const moving=Math.abs(forward)+Math.abs(side)>.08;
 
-  if (inputLength > 0.08) {
-    horizontal /= Math.max(1, inputLength);
-    vertical /= Math.max(1, inputLength);
+  if(moving){
+    const angle=Math.atan2(side,forward);
+    const direction=angle+cameraYaw;
 
-    const direction = new THREE.Vector3()
-      .addScaledVector(getCameraRight(), horizontal)
-      .addScaledVector(getCameraForward(), -vertical)
-      .normalize();
+    player.position.x+=Math.sin(direction)*delta*5;
+    player.position.z+=Math.cos(direction)*delta*5;
 
-    player.position.addScaledVector(direction, 5.8 * delta);
+    player.rotation.y=direction+Math.PI;
 
-    player.rotation.y = Math.atan2(
-      direction.x,
-      direction.z
-    );
-
-    walkTime += delta * 8;
+    playerSpeed=5;
+  }else{
+    playerSpeed=0;
   }
 
   /* JUMP PHYSICS */
 
-  if (jumping) {
-    playerHeight += jumpVelocity * delta;
-    jumpVelocity -= 16 * delta;
+  if(isJumping){
+    player.position.y+=jumpVelocity*delta;
+    jumpVelocity-=18*delta;
 
-    if (playerHeight <= 0) {
-      playerHeight = 0;
-      jumpVelocity = 0;
-      jumping = false;
+    if(player.position.y<=0){
+      player.position.y=0;
+      jumpVelocity=0;
+      isJumping=false;
     }
   }
 
-  player.position.y = playerHeight;
+  /* VILLAGER IDLE MOVEMENT */
 
-  /* CAMERA FOLLOW */
+  for(const npc of villagers){
+    npc.mesh.position.y=
+      Math.sin(elapsed*2+npc.phase)*.025;
+  }
 
-  const horizontalDistance =
-    cameraDistance * Math.cos(cameraPitch);
+  /* VEHICLE MOVEMENT */
 
-  const desiredCamera = new THREE.Vector3(
-    player.position.x + Math.sin(cameraYaw) * horizontalDistance,
-    player.position.y + cameraDistance * Math.sin(cameraPitch),
-    player.position.z + Math.cos(cameraYaw) * horizontalDistance
+  for(const vehicle of traffic){
+    vehicle.mesh.position.z+=vehicle.speed*delta;
+
+    if(vehicle.mesh.position.z>220){
+      vehicle.mesh.position.z=-220;
+    }
+
+    if(vehicle.mesh.position.z<-220){
+      vehicle.mesh.position.z=220;
+    }
+
+    for(const wheel of vehicle.wheels){
+      wheel.rotation.x+=vehicle.speed*delta*1.8;
+    }
+  }
+
+  /* BIRD FLIGHT */
+
+  for(const bird of birds){
+    bird.mesh.position.x+=bird.speed*delta;
+
+    bird.mesh.position.y+=
+      Math.sin(elapsed*2+bird.phase)*delta*.25;
+
+    bird.mesh.position.z+=
+      Math.cos(elapsed+bird.phase)*delta*.35;
+
+    if(bird.mesh.position.x>100){
+      bird.mesh.position.x=-100;
+    }
+
+    bird.wings.forEach(({pivot,side})=>{
+      pivot.rotation.z=
+        side*Math.sin(elapsed*9+bird.phase)*.72;
+    });
+  }
+
+  /* CAMERA */
+
+  const horizontalDistance=
+    cameraDistance*Math.cos(cameraPitch);
+
+  const desiredCamera=new THREE.Vector3(
+    player.position.x+
+      Math.sin(cameraYaw)*horizontalDistance,
+
+    player.position.y+
+      cameraDistance*Math.sin(cameraPitch),
+
+    player.position.z+
+      Math.cos(cameraYaw)*horizontalDistance
   );
 
   camera.position.lerp(
     desiredCamera,
-    1 - Math.exp(-7 * delta)
+    1-Math.exp(-7*delta)
   );
 
   camera.lookAt(
     player.position.x,
-    player.position.y + 1.2,
+    player.position.y+1.2,
     player.position.z
   );
 
-  /* WORLD LIMIT */
-
-  player.position.x = THREE.MathUtils.clamp(
-    player.position.x,
-    -85,
-    85
-  );
-
-  player.position.z = THREE.MathUtils.clamp(
-    player.position.z,
-    -115,
-    115
-  );
-
-  /* VILLAGER MOVEMENT */
-
-  villagers.forEach(v => {
-    v.mesh.position.y = Math.sin(
-      elapsed * 2 + v.phase
-    ) * 0.02;
-
-    v.mesh.rotation.y = Math.sin(
-      elapsed * 0.5 + v.phase
-    ) * 0.15;
-  });
-
-  /* TRAFFIC */
-
-  traffic.forEach(vehicle => {
-    vehicle.mesh.position.z += vehicle.speed * delta;
-
-    if (vehicle.mesh.position.z > 215) {
-      vehicle.mesh.position.z = -215;
-    }
-
-    if (vehicle.mesh.position.z < -215) {
-      vehicle.mesh.position.z = 215;
-    }
-
-    vehicle.wheels.forEach(wheel => {
-      wheel.rotation.x += vehicle.speed * delta * 1.7;
-    });
-  });
-
-  /* BIRDS */
-
-  birds.forEach(bird => {
-    bird.mesh.position.x += bird.speed * delta;
-
-    bird.mesh.position.y +=
-      Math.sin(elapsed * 2 + bird.phase) * delta * 0.3;
-
-    if (bird.mesh.position.x > 100) {
-      bird.mesh.position.x = -100;
-    }
-
-    bird.mesh.children.forEach((wing, index) => {
-      wing.rotation.z =
-        (index === 0 ? -1 : 1) *
-        Math.sin(elapsed * 8 + bird.phase) * 0.45;
-    });
-  });
-
-  updateLighting(delta);
-
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 
-/* RESIZE */
+/* =========================================
+   START GAME
+========================================= */
 
-window.addEventListener("resize", () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
+async function startGame(){
+  status("Preparing Nayabasti village",5);
 
-  renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.25));
-});
-
-/* START AFTER ASSET LOADING */
-
-async function startGame() {
   await prepareAssets();
 
-  loadingStatus("Building Nayabasti village", 90);
+  status("Building houses and trees",85);
 
-  createVillageBuildings();
+  createHouses();
+  createTrees();
 
-  addCharacterModel("farmer", player, 2.05);
-  player.position.set(0, 0, 0);
-  player.rotation.y = Math.PI;
-  playerModelReady = true;
+  player.position.set(0,0,0);
 
-  addVillager("casual", 8, 15);
-  addVillager("worker", -12, 30);
-  addVillager("casual", 30, -20);
-  addVillager("worker", -30, -25);
-  addVillager("casual", 45, 65);
+  status("Starting game",100);
 
-  loadingStatus("Starting game", 100);
-
-  setTimeout(() => {
+  setTimeout(()=>{
     loading.remove();
-  }, 500);
+  },600);
 
   animate();
 }
 
-startGame().catch(error => {
-  console.error("Game start error:", error);
-  loadingStatus("Some 3D assets could not load. Check internet connection.", 100);
+startGame().catch(error=>{
+  console.error("Game start error:",error);
+
+  try{
+    if(!player.children.length){
+      addCharacterModel("farmer",player,2.05);
+    }
+
+    player.position.set(0,0,0);
+
+    if(!villagers.length){
+      addVillager("casual",8,15);
+      addVillager("worker",-12,30);
+    }
+
+    loading.textContent="Starting Nayabasti...";
+
+    setTimeout(()=>loading.remove(),700);
+
+    animate();
+
+  }catch(fallbackError){
+    console.error(fallbackError);
+    loading.textContent="Unable to start game. Please reload.";
+  }
+});
+
+/* RESIZE */
+
+window.addEventListener("resize",()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.25));
 });
