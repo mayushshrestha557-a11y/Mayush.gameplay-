@@ -3,18 +3,19 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.m
 
 /* =========================================
    MAYUSH.GAMEPLAY — NAYABASTI TERAI
-   IPHONE TOUCH CAMERA FIX
+   REALISTIC VILLAGE UPGRADE
+   IPHONE TOUCH CAMERA + JOYSTICK + JUMP
 ========================================= */
 
 document.documentElement.style.cssText =
   "margin:0;width:100%;height:100%;overflow:hidden;";
 
 document.body.style.cssText =
-  "margin:0;width:100%;height:100%;overflow:hidden;background:#a9cde0;touch-action:none;user-select:none;";
+  "margin:0;width:100%;height:100%;overflow:hidden;background:#c4d8d1;touch-action:none;user-select:none;";
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xa9cde0);
-scene.fog = new THREE.Fog(0xa9cde0, 90, 270);
+scene.background = new THREE.Color(0xc4d8d1);
+scene.fog = new THREE.Fog(0xc4d8d1, 125, 390);
 
 const camera = new THREE.PerspectiveCamera(
   60, innerWidth / innerHeight, 0.1, 500
@@ -40,12 +41,12 @@ document.body.appendChild(renderer.domElement);
 
 /* LIGHTING */
 
-scene.add(new THREE.HemisphereLight(0xe5f5ff, 0x596b3b, 2));
+scene.add(new THREE.HemisphereLight(0xeaf5ff, 0x53633a, 1.8));
 
-const sun = new THREE.DirectionalLight(0xffe7bd, 2.2);
+const sun = new THREE.DirectionalLight(0xffedcf, 2.7);
 sun.position.set(-50, 90, 50);
 sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.mapSize.set(1536, 1536);
 sun.shadow.camera.left = -110;
 sun.shadow.camera.right = 110;
 sun.shadow.camera.top = 110;
@@ -66,6 +67,7 @@ function mat(color, roughness = 1, metalness = 0) {
 const M = {
   grass: mat(0x668d43),
   grass2: mat(0x77974d),
+  grassTuft: mat(0x91a85b),
   field: mat(0x829b48),
   crop: mat(0x9cae4b),
   road: mat(0x50504c),
@@ -269,7 +271,48 @@ function house(x, z, options = {}) {
   }
 
   box(w, h, d, wall, 0, h / 2 + 0.15, 0);
-  box(w + 0.8, 0.3, d + 0.8, roofMat, 0, h + 0.3, 0);
+
+  // Sloped Terai-style roof.
+  const roofPanelGeometry = new THREE.BoxGeometry(
+    w / 2 + 0.9, 0.22, d + 1.0
+  );
+
+  const leftRoof = new THREE.Mesh(roofPanelGeometry, roofMat);
+  leftRoof.position.set(-w / 4, h + 0.72, 0);
+  leftRoof.rotation.z = 0.30;
+  leftRoof.castShadow = true;
+  leftRoof.receiveShadow = true;
+  group.add(leftRoof);
+
+  const rightRoof = new THREE.Mesh(roofPanelGeometry, roofMat);
+  rightRoof.position.set(w / 4, h + 0.72, 0);
+  rightRoof.rotation.z = -0.30;
+  rightRoof.castShadow = true;
+  rightRoof.receiveShadow = true;
+  group.add(rightRoof);
+
+  const ridge = new THREE.Mesh(
+    new THREE.BoxGeometry(0.22, 0.22, d + 1.15),
+    M.darkWood
+  );
+
+  ridge.position.set(0, h + 1.12, 0);
+  ridge.castShadow = true;
+  group.add(ridge);
+
+  for (const sideZ of [-1, 1]) {
+    const fascia = new THREE.Mesh(
+      new THREE.BoxGeometry(w + 1.1, 0.18, 0.16),
+      M.darkWood
+    );
+
+    fascia.position.set(
+      0, h + 0.42, sideZ * (d / 2 + 0.48)
+    );
+
+    group.add(fascia);
+  }
+
   box(1.25, 2.4, 0.14, M.door, 0, 1.35, d / 2 + 0.08);
 
   for (const wx of [-w * 0.3, w * 0.3]) {
@@ -281,7 +324,8 @@ function house(x, z, options = {}) {
     box(0.06, 1.05, 0.16, M.wood, wx, 2.5, d / 2 + 0.2);
   }
 
-  box(w + 1.5, 0.2, 2.5, M.roof, 0, 3.2, d / 2 + 1.05);
+  // Veranda roof.
+  box(w + 1.5, 0.2, 2.5, roofMat, 0, 3.2, d / 2 + 1.05);
 
   for (const px of [-w / 2 + 0.5, w / 2 - 0.5]) {
     box(0.18, 3, 0.18, M.white, px, 1.55, d / 2 + 2);
@@ -486,6 +530,154 @@ function yard(x, z) {
 yard(45, 110);
 yard(-40, -65);
 yard(25, 45);
+
+/* REALISTIC TERAI VILLAGE DETAILS */
+
+// Roadside drainage channels.
+for (const side of [-1, 1]) {
+  addBox(side * 8.0, -0.02, 0, 0.32, 0.38, 420, M.dirt, false);
+  addBox(side * 8.0, 0.18, 0, 0.18, 0.08, 420, M.concrete, false);
+}
+
+// Dusty tyre tracks.
+for (const side of [-1, 1]) {
+  for (let z = -195; z < 205; z += 8) {
+    addBox(side * 4.0, 0.078, z, 0.16, 0.018, 3.2, M.sand, false);
+    addBox(side * 4.75, 0.078, z + 1.5, 0.10, 0.018, 2.4, M.dirt, false);
+  }
+}
+
+// Concrete culvert crossings.
+for (const z of [-35, 60, 125, -125]) {
+  addBox(0, 0.19, z, 18, 0.24, 5.5, M.concrete, false);
+
+  for (const side of [-1, 1]) {
+    addBox(side * 7.0, 0.02, z, 0.5, 0.28, 5.5, M.dirt, false);
+  }
+}
+
+// Raised earth divisions between paddy plots.
+for (const [x, z, w, d] of [
+  [-75, -95, 90, 90],
+  [82, -80, 100, 100],
+  [-82, 65, 95, 100],
+  [83, 100, 100, 90]
+]) {
+  for (let k = -1; k <= 1; k++) {
+    addBox(x + k * w / 3, 0.16, z, 0.34, 0.30, d, M.sand, false);
+  }
+
+  addBox(x, 0.16, z - d / 3, w, 0.30, 0.34, M.sand, false);
+  addBox(x, 0.16, z + d / 3, w, 0.30, 0.34, M.sand, false);
+}
+
+// Grass tufts.
+const tuftGeometry = new THREE.ConeGeometry(0.11, 0.48, 4);
+const tuftPositions = [];
+
+for (let i = 0; i < 420; i++) {
+  const x = (Math.random() - 0.5) * 190;
+  const z = (Math.random() - 0.5) * 230;
+
+  if (Math.abs(x) > 10) tuftPositions.push([x, z]);
+}
+
+const tuftMesh = new THREE.InstancedMesh(
+  tuftGeometry,
+  M.grassTuft,
+  tuftPositions.length
+);
+
+const tuftDummy = new THREE.Object3D();
+
+tuftPositions.forEach((p, i) => {
+  tuftDummy.position.set(p[0], 0.22, p[1]);
+  tuftDummy.rotation.y = Math.random() * Math.PI;
+
+  tuftDummy.scale.set(
+    0.7 + Math.random() * 0.8,
+    0.6 + Math.random() * 0.9,
+    0.7 + Math.random() * 0.8
+  );
+
+  tuftDummy.updateMatrix();
+  tuftMesh.setMatrixAt(i, tuftDummy.matrix);
+});
+
+tuftMesh.instanceMatrix.needsUpdate = true;
+tuftMesh.castShadow = false;
+tuftMesh.receiveShadow = false;
+scene.add(tuftMesh);
+
+// Haystacks.
+function haystack(x, z, scale = 1) {
+  const hay = new THREE.Mesh(
+    new THREE.ConeGeometry(1.15 * scale, 1.8 * scale, 9),
+    mat(0xb99a55)
+  );
+
+  hay.position.set(x, 0.9 * scale, z);
+  hay.castShadow = true;
+  scene.add(hay);
+
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.05 * scale, 1.15 * scale, 0.35 * scale, 10),
+    mat(0x92743d)
+  );
+
+  base.position.set(x, 0.18 * scale, z);
+  scene.add(base);
+}
+
+haystack(-34, -78, 0.9);
+haystack(37, 82, 0.8);
+haystack(-38, 115, 0.75);
+
+// Clay water pots.
+function clayPot(x, z) {
+  const pot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.34, 12, 10),
+    mat(0x9b5738)
+  );
+
+  pot.position.set(x, 0.34, z);
+  pot.scale.set(1, 1.1, 1);
+  pot.castShadow = true;
+  scene.add(pot);
+
+  const mouth = new THREE.Mesh(
+    new THREE.TorusGeometry(0.13, 0.055, 6, 12),
+    mat(0x75402d)
+  );
+
+  mouth.position.set(x, 0.69, z);
+  mouth.rotation.x = Math.PI / 2;
+  scene.add(mouth);
+}
+
+clayPot(-17, -79);
+clayPot(30, -99);
+clayPot(-18, 41);
+clayPot(31, 71);
+
+// Distant flat Terai tree line — no hills or mountains.
+for (let i = 0; i < 54; i++) {
+  const side = i % 2 === 0 ? -1 : 1;
+  const x = side * (155 + Math.random() * 55);
+  const z = -230 + Math.random() * 460;
+
+  const crown = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(3.2 + Math.random() * 2.2, 1),
+    i % 3 === 0 ? M.leaves2 : M.leaves
+  );
+
+  crown.position.set(x, 3.5 + Math.random() * 2, z);
+  crown.scale.set(1.5, 0.85, 1.1);
+  crown.castShadow = true;
+  scene.add(crown);
+
+  addCylinder(x, 1.7, z, 0.45, 0.35, 3.4, M.wood, 8);
+}
 
 /* PLAYER */
 
@@ -810,10 +1002,7 @@ window.addEventListener("keyup", e => {
   keys[e.key.toLowerCase()] = false;
 });
 
-/* =========================================
-   IPHONE CAMERA TOUCH CONTROL
-   SWIPE SCREEN TO LOOK AROUND
-========================================= */
+/* IPHONE CAMERA TOUCH CONTROL */
 
 const clock = new THREE.Clock();
 let walkTime = 0;
@@ -861,11 +1050,7 @@ function getRight(rotation) {
 camera.position.set(0, 6, cameraDistance);
 camera.lookAt(0, 1.2, 0);
 
-/*
-  IMPORTANT:
-  Native touch events are used instead of canvas pointer events.
-  Joystick and jump touches are ignored.
-*/
+/* Native iPhone touch camera controls. */
 
 window.addEventListener("touchstart", e => {
   if (lookTouchId !== null) return;
@@ -904,10 +1089,8 @@ window.addEventListener("touchmove", e => {
   lastTouchX = touch.clientX;
   lastTouchY = touch.clientY;
 
-  /* LEFT AND RIGHT CAMERA ROTATION */
   cameraYaw -= dx * 0.006;
 
-  /* UP AND DOWN CAMERA ANGLE */
   cameraPitch = THREE.MathUtils.clamp(
     cameraPitch + dy * 0.005,
     0.18,
@@ -961,8 +1144,6 @@ function animate() {
   let horizontal = moveX;
   let vertical = moveY;
 
-  /* KEYBOARD INPUT */
-
   if (keys["w"] || keys["arrowup"]) vertical = -1;
   if (keys["s"] || keys["arrowdown"]) vertical = 1;
   if (keys["a"] || keys["arrowleft"]) horizontal = -1;
@@ -973,8 +1154,6 @@ function animate() {
   if (inputLength > 0.08) {
     horizontal /= Math.max(1, inputLength);
     vertical /= Math.max(1, inputLength);
-
-    /* MOVEMENT RELATIVE TO CAMERA */
 
     const forward = getCameraForward();
     const right = getCameraRight();
@@ -991,16 +1170,12 @@ function animate() {
       speed * delta
     );
 
-    /* FACE MOVEMENT DIRECTION */
-
     playerRotation = Math.atan2(
       direction.x,
       direction.z
     );
 
     player.rotation.y = playerRotation;
-
-    /* WALK ANIMATION */
 
     walkTime += delta * 10;
 
@@ -1032,7 +1207,7 @@ function animate() {
 
   player.position.y = playerHeight;
 
-  /* CAMERA FOLLOW — ORBIT AROUND PLAYER */
+  /* CAMERA FOLLOW */
 
   const horizontalDistance =
     cameraDistance * Math.cos(cameraPitch);
