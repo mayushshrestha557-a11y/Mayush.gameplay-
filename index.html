@@ -3,32 +3,40 @@
 <html lang="ne">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+  >
+
   <meta name="theme-color" content="#87ceeb">
+
   <title>MAYUSH.GAMEPLAY</title>
+
   <link rel="stylesheet" href="./style.css">
 
   <style>
     html, body {
       margin: 0;
+      padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
       background: #87ceeb;
-    }
-
-    #loading {
-      display: none !important;
-    }
-
-    #rotate-message {
-      display: none;
+      touch-action: none;
     }
   </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+    }
+  }
+  </script>
 </head>
+
 <body>
-
   <script type="module" src="./game.js"></script>
-
 </body>
 </html>
