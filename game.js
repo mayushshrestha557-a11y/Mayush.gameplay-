@@ -3079,15 +3079,23 @@ async function loadAssetsSequentially(
 
   return results;
 }
+
 async function startAssetLoading() {
   if (loadingPromise) return loadingPromise;
 
   loadingPromise = (async () => {
     try {
-      setLoadingProgress(3, "Loading required real 3D models...");
+      setLoadingProgress(
+        3,
+        "Loading required real 3D models..."
+      );
 
-      const requiredResults = await Promise.allSettled(
-        REQUIRED_ASSETS.map(name => loadOneAsset(name))
+      // LOAD REQUIRED ASSETS ONE BY ONE
+      const requiredResults = await loadAssetsSequentially(
+        REQUIRED_ASSETS,
+        3,
+        48,
+        "Loading required models"
       );
 
       const failures = requiredResults
@@ -3112,13 +3120,12 @@ async function startAssetLoading() {
         return;
       }
 
-      setLoadingProgress(
+      // LOAD OPTIONAL ASSETS ONE BY ONE
+      const optionalResults = await loadAssetsSequentially(
+        OPTIONAL_ASSETS,
         48,
-        "Loading optional village characters and props..."
-      );
-
-      const optionalResults = await Promise.allSettled(
-        OPTIONAL_ASSETS.map(name => loadOneAsset(name))
+        75,
+        "Loading optional models"
       );
 
       const optionalFailures = optionalResults
@@ -3175,12 +3182,17 @@ async function startAssetLoading() {
       menu.style.display = "flex";
 
     } catch (error) {
-      console.error(error);
+      console.error("Asset loading error:", error);
 
       showAssetError([error]);
 
       loadingPromise = null;
     }
+  })();
+
+  return loadingPromise;
+}
+
   })();
 
   return loadingPromise;
