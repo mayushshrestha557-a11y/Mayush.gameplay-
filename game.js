@@ -3089,6 +3089,7 @@ document.getElementById("hbStart").onclick = () => {
 ===================================================== */
 
 let lastFrameTime = 0;
+let lastMiniMapTime = 0;
 
 function animate(timestamp = 0) {
   requestAnimationFrame(animate);
