@@ -2365,7 +2365,7 @@ document.head.appendChild(uiStyle);
    LOADING SCREEN
 ===================================================== */
 
-const loadingScreen = document.createElement("div");
+const loadingScreen = document.getElementById("hbLoading");
 
 loadingScreen.id = "hbLoading";
 
