@@ -1370,6 +1370,21 @@ if (
 
 return model;
 }
+
+function isPositionBlocked(x, z, radius = 0.65) {
+  for (const collider of worldColliders) {
+    if (
+      x + radius > collider.minX &&
+      x - radius < collider.maxX &&
+      z + radius > collider.minZ &&
+      z - radius < collider.maxZ
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
   
 /* =====================================================
    NARAYANGADH CITY DISTRICT
