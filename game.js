@@ -2386,7 +2386,7 @@ function setLoadingProgress(value, message) {
 ===================================================== */
 
 function showAssetError(errors) {
-  loadingScreen.remove();
+  loadingScreen.style.display = "none";
 
   const errorScreen = document.getElementById("hbError");
 errorScreen.style.display = "flex";
