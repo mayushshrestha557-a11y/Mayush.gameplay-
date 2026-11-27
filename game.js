@@ -2136,54 +2136,7 @@ intro.style.cssText = `
   text-align:center;
   opacity:1;
   transition:opacity 2s ease;
-`;
 
-
-const introStyle = document.createElement("style");
-introStyle.textContent = `
-  @keyframes hbIntroReveal {
-    0% { opacity:0; transform:scale(.85); filter:blur(12px); }
-    65% { opacity:1; transform:scale(1.04); filter:blur(0); }
-    100% { opacity:1; transform:scale(1); }
-  }
-
-  #hbCinematicIntro h1 {
-    font-size:clamp(38px, 9vw, 76px);
-    letter-spacing:8px;
-    text-shadow:0 0 25px #d6a45b;
-    margin:18px 0;
-  }
-
-  #hbCinematicIntro p {
-    letter-spacing:4px;
-    color:#c9b58b;
-    font-size:12px;
-  }
-
-  .hbIntroStudio {
-    font-size:12px;
-    letter-spacing:5px;
-    color:#d6a45b;
-  }
-  
-  .hbIntroContent {
-  opacity:1;
-}
-
-#hbIntroBegin {
-  display:block;
-  margin:35px auto 0;
-  padding:14px 28px;
-  background:transparent;
-  color:#d6a45b;
-  border:1px solid #d6a45b;
-  border-radius:5px;
-  letter-spacing:3px;
-  font-size:13px;
-  cursor:pointer;
-}
-`;
-document.head.appendChild(introStyle);
 
 document.getElementById("hbIntroBegin").addEventListener("click", () => {
   const button = document.getElementById("hbIntroBegin");
