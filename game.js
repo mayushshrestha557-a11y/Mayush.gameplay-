@@ -1784,15 +1784,50 @@ function createVehicle(
 
   scene.add(model);
 
-  traffic.push({
+    traffic.push({
     model,
     assetName,
     startX: x,
     startZ: z,
     direction: rotation,
-    speed: 0,
-    phase: Math.random() * Math.PI * 2
+    speed: assetName === "tractor" ? 1.2 : 2.2,
+    travel: 0,
+    travelDirection: 1
   });
+  
+  /* =====================================================
+   MOVING ROAD TRAFFIC
+===================================================== */
+
+function updateTraffic(dt) {
+  for (const vehicle of traffic) {
+    vehicle.travel +=
+      vehicle.speed *
+      dt *
+      vehicle.travelDirection;
+
+    if (vehicle.travel >= 18) {
+      vehicle.travel = 18;
+      vehicle.travelDirection = -1;
+    }
+
+    if (vehicle.travel <= -18) {
+      vehicle.travel = -18;
+      vehicle.travelDirection = 1;
+    }
+
+    const forwardX = Math.sin(vehicle.direction);
+    const forwardZ = Math.cos(vehicle.direction);
+
+    vehicle.model.position.x =
+      vehicle.startX +
+      forwardX * vehicle.travel;
+
+    vehicle.model.position.z =
+      vehicle.startZ +
+      forwardZ * vehicle.travel;
+  }
+}
 
   return model;
 }
