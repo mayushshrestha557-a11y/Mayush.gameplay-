@@ -1348,6 +1348,109 @@ function addImportedObject(
 
   return model;
 }
+/* =====================================================
+   NARAYANGADH CITY DISTRICT
+===================================================== */
+
+function createNarayangadhCity() {
+  // CITY BUILDINGS - WEST SIDE
+  addImportedObject(
+    "cityBuildingA",
+    { x: 160, y: 0, z: -160 },
+    18,
+    0
+  );
+
+  addImportedObject(
+    "cityBuildingB",
+    { x: 205, y: 0, z: -160 },
+    15,
+    Math.PI / 2
+  );
+
+  addImportedObject(
+    "cityBuildingC",
+    { x: 160, y: 0, z: -75 },
+    20,
+    0
+  );
+
+  addImportedObject(
+    "cityBuildingD",
+    { x: 205, y: 0, z: -75 },
+    16,
+    Math.PI / 2
+  );
+
+  // CITY BUILDINGS - EAST SIDE
+  addImportedObject(
+    "cityBuildingE",
+    { x: 160, y: 0, z: 15 },
+    22,
+    0
+  );
+
+  addImportedObject(
+    "cityBuildingF",
+    { x: 205, y: 0, z: 15 },
+    17,
+    Math.PI / 2
+  );
+
+  addImportedObject(
+    "cityBuildingG",
+    { x: 160, y: 0, z: 175 },
+    19,
+    0
+  );
+
+  addImportedObject(
+    "cityBuildingH",
+    { x: 205, y: 0, z: 175 },
+    16,
+    Math.PI / 2
+  );
+
+  // CITY HIGHWAY SIGN
+  addImportedObject(
+    "citySign",
+    { x: 112, y: 0, z: -190 },
+    5,
+    Math.PI / 2
+  );
+
+  // CITY BRIDGE
+  addImportedObject(
+    "cityBridge",
+    { x: 175, y: 0, z: 110 },
+    4,
+    0
+  );
+
+  // CITY PEDESTRIANS
+  addImportedObject(
+    "cityMan",
+    { x: 150, y: 0, z: -45 },
+    1.75,
+    Math.PI
+  );
+
+  addImportedObject(
+    "cityWoman",
+    { x: 190, y: 0, z: -45 },
+    1.7,
+    0
+  );
+
+  addImportedObject(
+    "cityPedestrian",
+    { x: 150, y: 0, z: 65 },
+    1.7,
+    Math.PI
+  );
+
+  console.log("NARAYANGADH CITY CREATED");
+}
 
 function createVillageTrees() {
   const treePositions = [
