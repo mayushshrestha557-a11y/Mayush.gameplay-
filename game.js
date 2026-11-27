@@ -2525,30 +2525,7 @@ document.getElementById("hbIntroBegin").addEventListener("click", () => {
     }, 2100);
   }, 8500);
 });
-const menu = document.createElement("div");
-
-menu.id = "hbMenu";
-
-menu.style.display = "none";
-
-menu.innerHTML = `
-  <h1>HAMRO BASTI</h1>
-  <p>EXPLORE YOUR NEPALI VILLAGE</p>
-
-  <button class="hbButton" id="hbStart">
-    START GAME
-  </button>
-
-  <button class="hbButton" id="hbOpenSettings">
-    SETTINGS
-  </button>
-
-  <div id="hbMenuCredit">
-    CREATED &amp; FOUNDED BY MAYUSH SHRESTHA<br>
-    Creator's rights and royalties belong to
-    Mayush Shrestha, subject to applicable agreements and law.
-  </div>
-`;
+const menu = document.getElementById("hbMenu");
 
 document.body.appendChild(menu);
 
