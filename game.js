@@ -2391,17 +2391,6 @@ function showAssetError(errors) {
   const errorScreen = document.getElementById("hbError");
 errorScreen.style.display = "flex";
 
-  errorScreen.innerHTML = `
-    <h1>ASSET LOAD FAILED</h1>
-    <p>Required real 3D assets could not be loaded.</p>
-    <div id="hbErrorDetails"
-      style="max-width:700px;max-height:45vh;overflow:auto;
-      background:#160c0c;padding:15px;border-radius:10px;
-      text-align:left;font-size:12px;line-height:1.8;">
-    </div>
-    <button class="hbButton" id="hbRetry">RETRY LOAD</button>
-  `;
-
   document.body.appendChild(errorScreen);
 
   const details = document.getElementById("hbErrorDetails");
