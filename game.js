@@ -2494,10 +2494,10 @@ settings.innerHTML = `
 
     <label>Graphics Quality</label>
     <select id="hbGraphics">
-      <option value="high" selected>High</option>
-      <option value="medium">Medium</option>
-      <option value="low">Low</option>
-    </select>
+  <option value="high">High</option>
+  <option value="medium">Medium</option>
+  <option value="low" selected>Low (iPhone recommended)</option>
+</select>
 
     <button class="hbButton" id="hbSaveSettings">
       SAVE SETTINGS
