@@ -2527,8 +2527,6 @@ document.getElementById("hbIntroBegin").addEventListener("click", () => {
 });
 const menu = document.getElementById("hbMenu");
 
-document.body.appendChild(menu);
-
 /* =====================================================
    HAMRO BASTI - NATURAL AMBIENT SOUND
 ===================================================== */
