@@ -256,3 +256,297 @@ canvas:not(#miniMap) {
     display: none;
   }
 }
+
+
+/* HAMRO BASTI GAME UI */
+
+#hbLoading, #hbMenu, #hbError {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 24px;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background:
+    linear-gradient(rgba(7,17,14,.78),rgba(7,17,14,.92)),
+    url("https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=1600");
+  background-size: cover;
+  background-position: center;
+}
+
+#hbLoading h1, #hbMenu h1 {
+  font-size: clamp(34px, 8vw, 64px);
+  letter-spacing: 5px;
+  margin: 0 0 12px;
+  text-shadow: 0 4px 20px #000;
+}
+
+#hbLoading p, #hbMenu p {
+  color: #d5e0d5;
+  letter-spacing: 1px;
+}
+
+.hbButton {
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 10px;
+  padding: 14px 26px;
+  color: white;
+  background: rgba(29,75,49,.9);
+  font-size: 16px;
+  font-weight: bold;
+  margin: 8px;
+  min-width: 190px;
+  cursor: pointer;
+}
+
+.hbButton:active { transform: scale(.97); }
+
+#hbProgress {
+  width: min(300px, 80vw);
+  height: 7px;
+  background: rgba(255,255,255,.2);
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 18px;
+}
+
+#hbProgressBar {
+  height: 100%;
+  width: 0%;
+  background: #a7d77b;
+  transition: width .2s;
+}
+
+#hbLoadingStatus {
+  font-size: 13px;
+  max-width: 90%;
+  overflow-wrap: anywhere;
+}
+
+#hbMenuCredit {
+  font-size: 11px;
+  line-height: 1.8;
+  opacity: .85;
+  margin-top: 24px;
+}
+
+#hbSettings {
+  display: none;
+  position: fixed;
+  z-index: 1100;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  color: white;
+  font-family: Arial, sans-serif;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+#hbSettingsPanel {
+  width: min(380px, 94vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 22px;
+  background: #1d2925;
+  border: 1px solid #687b6c;
+  border-radius: 15px;
+}
+
+#hbSettingsPanel label {
+  display: block;
+  margin: 18px 0 6px;
+  font-size: 14px;
+}
+
+#hbSettingsPanel input,
+#hbSettingsPanel select { width: 100%; }
+
+#hbHUD {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  display: none;
+  font-family: Arial, sans-serif;
+}
+
+#miniMapFrame {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 132px;
+  height: 132px;
+  border: 3px solid rgba(255,255,255,.85);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(20,30,25,.85);
+  box-shadow: 0 3px 15px #0008;
+}
+
+#miniMap { width: 100%; height: 100%; }
+
+#hbLocation {
+  position: absolute;
+  top: 155px;
+  right: 12px;
+  padding: 6px 10px;
+  background: rgba(0,0,0,.55);
+  color: white;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+#joystick {
+  position: absolute;
+  bottom: 28px;
+  left: 25px;
+  width: 128px;
+  height: 128px;
+  border: 2px solid rgba(255,255,255,.5);
+  background: rgba(20,25,22,.35);
+  border-radius: 50%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#joystickKnob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  margin-left: -26px;
+  margin-top: -26px;
+  border-radius: 50%;
+  background: rgba(235,241,231,.72);
+  border: 2px solid white;
+  box-shadow: 0 3px 12px #0008;
+  pointer-events: none;
+}
+
+#hbJump {
+  position: absolute;
+  right: 27px;
+  bottom: 34px;
+  width: 76px;
+  height: 76px;
+  border: 2px solid white;
+  border-radius: 50%;
+  color: white;
+  background: rgba(45,100,65,.75);
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#hbRun {
+  position: absolute;
+  right: 112px;
+  bottom: 42px;
+  width: 66px;
+  height: 52px;
+  border: 1px solid white;
+  border-radius: 12px;
+  color: white;
+  background: rgba(20,20,20,.65);
+  font-size: 11px;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#hbHint {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: white;
+  text-shadow: 0 2px 4px black;
+  white-space: nowrap;
+}
+
+#hbPause {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid white;
+  border-radius: 9px;
+  color: white;
+  background: rgba(0,0,0,.55);
+  pointer-events: auto;
+  font-size: 18px;
+}
+
+#hbTouchHelp {
+  position: absolute;
+  top: 65px;
+  left: 12px;
+  color: white;
+  background: rgba(0,0,0,.4);
+  padding: 6px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+@media (min-width: 900px) {
+  #joystick {
+    width: 145px;
+    height: 145px;
+    left: 38px;
+    bottom: 35px;
+  }
+  #hbJump { right: 40px; bottom: 45px; }
+  #hbRun { right: 130px; bottom: 54px; }
+}
+
+/* INTRO ANIMATION */
+
+@keyframes hbIntroReveal {
+  0% { opacity:0; transform:scale(.85); filter:blur(12px); }
+  65% { opacity:1; transform:scale(1.04); filter:blur(0); }
+  100% { opacity:1; transform:scale(1); }
+}
+
+#hbCinematicIntro h1 {
+  font-size:clamp(38px, 9vw, 76px);
+  letter-spacing:8px;
+  text-shadow:0 0 25px #d6a45b;
+  margin:18px 0;
+}
+
+#hbCinematicIntro p {
+  letter-spacing:4px;
+  color:#c9b58b;
+  font-size:12px;
+}
+
+.hbIntroStudio {
+  font-size:12px;
+  letter-spacing:5px;
+  color:#d6a45b;
+}
+
+.hbIntroContent { opacity:1; }
+
+#hbIntroBegin {
+  display:block;
+  margin:35px auto 0;
+  padding:14px 28px;
+  background:transparent;
+  color:#d6a45b;
+  border:1px solid #d6a45b;
+  border-radius:5px;
+  letter-spacing:3px;
+  font-size:13px;
+  cursor:pointer;
+}
+
