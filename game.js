@@ -1343,11 +1343,7 @@ function addImportedObject(
 
   return model;
 }
-  scene.add(model);
-  worldObjects.push(model);
-
-  return model;
-}
+  
 /* =====================================================
    NARAYANGADH CITY DISTRICT
 ===================================================== */
