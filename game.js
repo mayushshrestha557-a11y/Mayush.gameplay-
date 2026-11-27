@@ -942,8 +942,24 @@ const ASSETS = {
   shop: "village-shopfront-d3088e.glb",
   well: "village-well-v1-lod0.glb",
 
-  villageTile: "hex-tile-village.glb",
-  guitar: "acoustic-guitar-v1-lod0.glb"
+    villageTile: "hex-tile-village.glb",
+  guitar: "acoustic-guitar-v1-lod0.glb",
+
+  // NARAYANGADH CITY
+  cityBuildingA: "building-a.glb",
+  cityBuildingB: "building-b.glb",
+  cityBuildingC: "building-c.glb",
+  cityBuildingD: "building-d.glb",
+  cityBuildingE: "building-e.glb",
+  cityBuildingF: "building-f.glb",
+  cityBuildingG: "building-g.glb",
+  cityBuildingH: "building-h.glb",
+  cityBridge: "road-bridge.glb",
+  cityHighway: "highway-straight-section.glb",
+  citySign: "sign-highway-detailed.glb",
+  cityMan: "Business_Male_01.glb",
+  cityWoman: "Business_Female_01.glb",
+  cityPedestrian: "Female_Adult_01.glb"
 };
 
 const loader = new GLTFLoader();
