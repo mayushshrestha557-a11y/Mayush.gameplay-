@@ -2368,8 +2368,6 @@ document.head.appendChild(uiStyle);
 const loadingScreen = document.getElementById("hbLoading");
 
 function setLoadingProgress(value, message) {
-
-function setLoadingProgress(value, message) {
   const bar = document.getElementById("hbProgressBar");
   const status = document.getElementById("hbLoadingStatus");
 
