@@ -2437,6 +2437,76 @@ function showAssetError(errors) {
    INTRO MENU
 ===================================================== */
 
+/* =====================================================
+   HAMRO BASTI CINEMATIC INTRO
+===================================================== */
+
+const intro = document.createElement("div");
+
+intro.id = "hbCinematicIntro";
+
+intro.innerHTML = `
+  <div class="hbIntroContent">
+    <div class="hbIntroStudio">MAYUSH GAMEPLAY PRESENTS</div>
+    <h1>HAMRO BASTI</h1>
+    <p>YOUR VILLAGE. YOUR WORLD.</p>
+  </div>
+`;
+
+intro.style.cssText = `
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  text-align:center;
+  opacity:1;
+  transition:opacity 2s ease;
+`;
+
+intro.querySelector(".hbIntroContent").style.cssText = `
+  opacity:0;
+  animation:hbIntroReveal 3s ease forwards;
+`;
+
+const introStyle = document.createElement("style");
+introStyle.textContent = `
+  @keyframes hbIntroReveal {
+    0% { opacity:0; transform:scale(.85); filter:blur(12px); }
+    65% { opacity:1; transform:scale(1.04); filter:blur(0); }
+    100% { opacity:1; transform:scale(1); }
+  }
+
+  #hbCinematicIntro h1 {
+    font-size:clamp(38px, 9vw, 76px);
+    letter-spacing:8px;
+    text-shadow:0 0 25px #d6a45b;
+    margin:18px 0;
+  }
+
+  #hbCinematicIntro p {
+    letter-spacing:4px;
+    color:#c9b58b;
+    font-size:12px;
+  }
+
+  .hbIntroStudio {
+    font-size:12px;
+    letter-spacing:5px;
+    color:#d6a45b;
+  }
+`;
+document.head.appendChild(introStyle);
+document.body.appendChild(intro);
+
+setTimeout(() => {
+  intro.style.opacity = "0";
+  setTimeout(() => intro.remove(), 2100);
+}, 4500);
+
 const menu = document.createElement("div");
 
 menu.id = "hbMenu";
