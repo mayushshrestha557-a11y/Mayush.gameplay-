@@ -3100,6 +3100,7 @@ async function startAssetLoading() {
         createVillageShop();
         createVillageWell();
         createVillageTileDecorations();
+        createNarayangadhCity();
 
         createPeople();
         createFarmAnimals();
