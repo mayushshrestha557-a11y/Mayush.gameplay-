@@ -3040,6 +3040,45 @@ document.getElementById("hbPause").onclick = pauseGame;
 let assetsLoaded = false;
 let worldCreated = false;
 
+async function loadAssetsSequentially(
+  assetNames,
+  progressStart,
+  progressEnd,
+  statusText
+) {
+  const results = [];
+
+  for (let i = 0; i < assetNames.length; i++) {
+    const name = assetNames[i];
+
+    try {
+      await loadOneAsset(name);
+
+      results.push({
+        status: "fulfilled",
+        value: assetLibrary[name]
+      });
+
+    } catch (error) {
+      results.push({
+        status: "rejected",
+        reason: error
+      });
+    }
+
+    const progress =
+      progressStart +
+      ((i + 1) / assetNames.length) *
+      (progressEnd - progressStart);
+
+    setLoadingProgress(
+      progress,
+      `${statusText} (${i + 1}/${assetNames.length})`
+    );
+  }
+
+  return results;
+}
 async function startAssetLoading() {
   if (loadingPromise) return loadingPromise;
 
