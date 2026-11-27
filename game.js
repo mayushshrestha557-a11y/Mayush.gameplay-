@@ -2516,7 +2516,56 @@ introStyle.textContent = `
 document.head.appendChild(introStyle);
 document.body.appendChild(intro);
 
+document.getElementById("hbIntroBegin").addEventListener("click", () => {
+  const button = document.getElementById("hbIntroBegin");
+  button.disabled = true;
 
+  const content = intro.querySelector(".hbIntroContent");
+  content.style.animation = "hbIntroReveal 3s ease forwards";
+
+  const AudioContextClass =
+    window.AudioContext || window.webkitAudioContext;
+
+  const audio = new AudioContextClass();
+
+  audio.resume();
+
+  const notes = [
+    392, 440, 523, 440,
+    392, 330, 392, 440,
+    523, 587, 523, 440,
+    392
+  ];
+
+  notes.forEach((frequency, index) => {
+    const start = audio.currentTime + index * 0.58;
+
+    const oscillator = audio.createOscillator();
+    const volume = audio.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = frequency;
+
+    volume.gain.setValueAtTime(0, start);
+    volume.gain.linearRampToValueAtTime(0.12, start + 0.08);
+    volume.gain.linearRampToValueAtTime(0, start + 0.52);
+
+    oscillator.connect(volume);
+    volume.connect(audio.destination);
+
+    oscillator.start(start);
+    oscillator.stop(start + 0.55);
+  });
+
+  setTimeout(() => {
+    intro.style.opacity = "0";
+
+    setTimeout(() => {
+      intro.remove();
+      audio.close();
+    }, 2100);
+  }, 8500);
+});
 const menu = document.createElement("div");
 
 menu.id = "hbMenu";
