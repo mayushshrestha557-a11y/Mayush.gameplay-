@@ -2468,10 +2468,6 @@ intro.style.cssText = `
   transition:opacity 2s ease;
 `;
 
-intro.querySelector(".hbIntroContent").style.cssText = `
-  opacity:0;
-  animation:hbIntroReveal 3s ease forwards;
-`;
 
 const introStyle = document.createElement("style");
 introStyle.textContent = `
