@@ -2388,9 +2388,8 @@ function setLoadingProgress(value, message) {
 function showAssetError(errors) {
   loadingScreen.remove();
 
-  const errorScreen = document.createElement("div");
-
-  errorScreen.id = "hbError";
+  const errorScreen = document.getElementById("hbError");
+errorScreen.style.display = "flex";
 
   errorScreen.innerHTML = `
     <h1>ASSET LOAD FAILED</h1>
