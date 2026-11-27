@@ -2474,7 +2474,6 @@ introStyle.textContent = `
 }
 `;
 document.head.appendChild(introStyle);
-document.body.appendChild(intro);
 
 document.getElementById("hbIntroBegin").addEventListener("click", () => {
   const button = document.getElementById("hbIntroBegin");
