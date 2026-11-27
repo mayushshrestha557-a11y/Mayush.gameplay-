@@ -2412,18 +2412,7 @@ errorScreen.style.display = "flex";
    HAMRO BASTI CINEMATIC INTRO
 ===================================================== */
 
-const intro = document.createElement("div");
-
-intro.id = "hbCinematicIntro";
-
-intro.innerHTML = `
-  <div class="hbIntroContent">
-    <div class="hbIntroStudio">MAYUSH GAMEPLAY PRESENTS</div>
-    <h1>HAMRO BASTI</h1>
-    <p>YOUR VILLAGE. YOUR WORLD.</p>
-    <button id="hbIntroBegin">TAP TO BEGIN</button>
-  </div>
-`;
+const intro = document.getElementById("hbCinematicIntro");
 
 intro.style.cssText = `
   position:fixed;
