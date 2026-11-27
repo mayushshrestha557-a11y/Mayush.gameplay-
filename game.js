@@ -2736,36 +2736,7 @@ document.getElementById("hbSaveSettings").onclick = () => {
    HUD
 ===================================================== */
 
-const hud = document.createElement("div");
-
-hud.id = "hbHUD";
-
-hud.innerHTML = `
-  <button id="hbPause">Ⅱ</button>
-
-  <div id="miniMapFrame">
-    <canvas id="miniMap" width="256" height="256"></canvas>
-  </div>
-
-  <div id="hbLocation">HAMRO BASTI</div>
-
-  <div id="hbTouchHelp">
-    DRAG SCREEN TO ROTATE CAMERA
-  </div>
-
-  <div id="joystick">
-    <div id="joystickKnob"></div>
-  </div>
-
-  <button id="hbRun">RUN</button>
-  <button id="hbJump">JUMP</button>
-
-  <div id="hbHint">
-    MOVE • LOOK AROUND • EXPLORE
-  </div>
-`;
-
-document.body.appendChild(hud);
+const hud = document.getElementById("hbHUD");
 
 /* =====================================================
    MINIMAP
