@@ -2906,7 +2906,7 @@ function pauseGame() {
   }
 }
 
-document.getElementById("hbPause").onclick = pauseGame;
+// document.getElementById("hbPause").onclick = pauseGame;
 
 /* =====================================================
    ASSET LOADING AND WORLD CREATION
