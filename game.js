@@ -1784,7 +1784,7 @@ function createVehicle(
 
   scene.add(model);
 
-    traffic.push({
+  traffic.push({
     model,
     assetName,
     startX: x,
@@ -1794,8 +1794,11 @@ function createVehicle(
     travel: 0,
     travelDirection: 1
   });
-  
-  /* =====================================================
+
+  return model;
+}
+
+/* =====================================================
    MOVING ROAD TRAFFIC
 ===================================================== */
 
@@ -1827,6 +1830,7 @@ function updateTraffic(dt) {
       vehicle.startZ +
       forwardZ * vehicle.travel;
   }
+}
 }
 
   return model;
