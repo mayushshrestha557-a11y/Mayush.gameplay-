@@ -2398,7 +2398,7 @@ errorScreen.style.display = "flex";
     .join("\n\n");
 
   document.getElementById("hbRetry").onclick = () => {
-    errorScreen.remove();
+    errorScreen.style.display = "none";
     loadingScreen.style.display = "flex";
     startAssetLoading();
   };
