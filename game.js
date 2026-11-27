@@ -2459,7 +2459,7 @@ intro.style.cssText = `
   inset:0;
   z-index:99999;
   background:#000;
-  display:flex;
+  display:none;
   align-items:center;
   justify-content:center;
   color:white;
