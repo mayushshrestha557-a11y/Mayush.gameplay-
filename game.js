@@ -1326,6 +1326,13 @@ function addImportedObject(
   targetSize,
   rotation = 0
 ) {
+  const gltf = assetLibrary[assetName];
+
+  if (!gltf || !gltf.scene) {
+    console.warn("Optional world object skipped:", assetName);
+    return null;
+  }
+
   const model = cloneModel(assetName);
 
   fitModel(model, targetSize);
