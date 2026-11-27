@@ -2497,7 +2497,7 @@ introStyle.textContent = `
   }
   
   .hbIntroContent {
-  opacity:0;
+  opacity:1;
 }
 
 #hbIntroBegin {
