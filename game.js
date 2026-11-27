@@ -31,8 +31,8 @@ const renderer = new THREE.WebGLRenderer({
   powerPreference: "low-power"
 });
 
+renderer.setPixelRatio(0.75);
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.12;
