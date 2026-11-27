@@ -1831,10 +1831,7 @@ function updateTraffic(dt) {
       forwardZ * vehicle.travel;
   }
 }
-}
 
-  return model;
-}
 
 function createVehicles() {
   createVehicle(
