@@ -3229,11 +3229,6 @@ async function startAssetLoading() {
   return loadingPromise;
 }
 
-  })();
-
-  return loadingPromise;
-}
-
 /* =====================================================
    START AND RESUME GAME
 ===================================================== */
