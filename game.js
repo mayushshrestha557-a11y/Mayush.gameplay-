@@ -1347,10 +1347,28 @@ function addImportedObject(
   model.rotation.y = rotation;
 
   scene.add(model);
-  worldObjects.push(model);
+worldObjects.push(model);
 
-  return model;
+if (
+  assetName === "tree" ||
+  assetName === "shop" ||
+  assetName === "well" ||
+  assetName.startsWith("cityBuilding")
+) {
+  model.updateMatrixWorld(true);
+
+  const bounds = new THREE.Box3().setFromObject(model);
+
+  worldColliders.push({
+    minX: bounds.min.x,
+    maxX: bounds.max.x,
+    minZ: bounds.min.z,
+    maxZ: bounds.max.z,
+    assetName
+  });
 }
+
+return model;
   
 /* =====================================================
    NARAYANGADH CITY DISTRICT
