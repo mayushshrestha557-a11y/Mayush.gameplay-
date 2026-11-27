@@ -1001,7 +1001,22 @@ const OPTIONAL_ASSETS = [
   "mountainBike",
   "bmxBike",
   "villageTile",
-  "guitar"
+  "guitar",
+
+  "cityBuildingA",
+  "cityBuildingB",
+  "cityBuildingC",
+  "cityBuildingD",
+  "cityBuildingE",
+  "cityBuildingF",
+  "cityBuildingG",
+  "cityBuildingH",
+  "cityBridge",
+  "cityHighway",
+  "citySign",
+  "cityMan",
+  "cityWoman",
+  "cityPedestrian"
 ];
 
 async function loadOneAsset(name) {
