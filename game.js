@@ -2516,10 +2516,6 @@ introStyle.textContent = `
 document.head.appendChild(introStyle);
 document.body.appendChild(intro);
 
-setTimeout(() => {
-  intro.style.opacity = "0";
-  setTimeout(() => intro.remove(), 2100);
-}, 4500);
 
 const menu = document.createElement("div");
 
