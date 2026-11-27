@@ -1319,6 +1319,7 @@ function updateActorBreathing(actor, dt, intensity = 1) {
 ===================================================== */
 
 const worldObjects = [];
+const worldColliders = [];
 
 function addImportedObject(
   assetName,
