@@ -2391,8 +2391,6 @@ function showAssetError(errors) {
   const errorScreen = document.getElementById("hbError");
 errorScreen.style.display = "flex";
 
-  document.body.appendChild(errorScreen);
-
   const details = document.getElementById("hbErrorDetails");
 
   details.textContent = errors
