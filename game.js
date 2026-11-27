@@ -3116,9 +3116,13 @@ function animate(timestamp = 0) {
   updateDog(dt);
   updateBirds(dt);
 
-  updateCamera(dt);
+    updateCamera(dt);
 
-  drawMiniMap();
+  // Update minimap only 10 times per second.
+  if (timestamp - lastMiniMapTime >= 100) {
+    drawMiniMap();
+    lastMiniMapTime = timestamp;
+  }
 
   renderer.render(scene, camera);
 }
