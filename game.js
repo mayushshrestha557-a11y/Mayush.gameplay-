@@ -2681,50 +2681,7 @@ menu.addEventListener("click", (event) => {
    SETTINGS PANEL
 ===================================================== */
 
-const settings = document.createElement("div");
-
-settings.id = "hbSettings";
-
-settings.innerHTML = `
-  <div id="hbSettingsPanel">
-    <h2>GAME SETTINGS</h2>
-
-    <label>Joystick Sensitivity</label>
-    <input id="hbJoySensitivity"
-      type="range" min="0.5" max="2"
-      step="0.1" value="1">
-
-    <label>Camera Sensitivity</label>
-    <input id="hbCamSensitivity"
-      type="range" min="0.4" max="2"
-      step="0.1" value="1">
-
-    <label>Camera Distance</label>
-    <select id="hbCameraDistance">
-      <option value="3.1">Very Close</option>
-      <option value="3.4" selected>GTA Style</option>
-      <option value="4.5">Normal</option>
-      <option value="6.5">Far</option>
-    </select>
-
-    <label>Graphics Quality</label>
-    <select id="hbGraphics">
-  <option value="high">High</option>
-  <option value="medium">Medium</option>
-  <option value="low" selected>Low (iPhone recommended)</option>
-</select>
-
-    <button class="hbButton" id="hbSaveSettings">
-      SAVE SETTINGS
-    </button>
-
-    <button class="hbButton" id="hbCloseSettings">
-      BACK
-    </button>
-  </div>
-`;
-
-document.body.appendChild(settings);
+const settings = document.getElementById("hbSettings");
 
 document.getElementById("hbOpenSettings").onclick = () => {
   settings.style.display = "flex";
