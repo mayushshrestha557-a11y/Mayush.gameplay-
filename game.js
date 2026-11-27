@@ -1343,6 +1343,11 @@ function addImportedObject(
 
   return model;
 }
+  scene.add(model);
+  worldObjects.push(model);
+
+  return model;
+}
 
 function createVillageTrees() {
   const treePositions = [
