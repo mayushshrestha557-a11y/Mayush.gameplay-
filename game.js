@@ -2356,22 +2356,11 @@ document.getElementById("hbSaveSettings").onclick = () => {
   graphicsQuality =
     document.getElementById("hbGraphics").value;
 
-  if (graphicsQuality === "low") {
-    renderer.setPixelRatio(
-      Math.min(window.devicePixelRatio || 1, 0.8)
-    );
-    renderer.shadowMap.enabled = false;
-  } else if (graphicsQuality === "medium") {
-    renderer.setPixelRatio(
-      Math.min(window.devicePixelRatio || 1, 1)
-    );
-    renderer.shadowMap.enabled = true;
-  } else {
-    renderer.setPixelRatio(
-      Math.min(window.devicePixelRatio || 1, 1.5)
-    );
-    renderer.shadowMap.enabled = true;
-  }
+  renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio || 1, 0.65)
+);
+
+renderer.shadowMap.enabled = false;
 
   renderer.setSize(
     window.innerWidth,
