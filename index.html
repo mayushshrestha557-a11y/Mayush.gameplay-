@@ -40,25 +40,6 @@
 </head>
 
 <body>
-  <script>
-window.addEventListener("error", function(e) {
-  document.body.innerHTML =
-    "<div style='background:#160000;color:white;padding:25px;font:14px Arial;overflow:auto;height:100vh'>" +
-    "<h2>GAME ERROR</h2><pre>" +
-    (e.message || "Unknown error") +
-    "\n" + (e.filename || "") +
-    "\nLine: " + (e.lineno || "") +
-    "</pre></div>";
-});
-
-window.addEventListener("unhandledrejection", function(e) {
-  document.body.innerHTML =
-    "<div style='background:#160000;color:white;padding:25px;font:14px Arial'>" +
-    "<h2>GAME LOADING ERROR</h2><pre>" +
-    String(e.reason) +
-    "</pre></div>";
-});
-</script>
-  <script type="module" src="./game.js"></script>
+  
 </body>
 </html>
