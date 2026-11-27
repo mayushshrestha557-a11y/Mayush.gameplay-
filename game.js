@@ -2367,20 +2367,7 @@ document.head.appendChild(uiStyle);
 
 const loadingScreen = document.getElementById("hbLoading");
 
-loadingScreen.id = "hbLoading";
-
-loadingScreen.innerHTML = `
-  <h1>HAMRO BASTI</h1>
-  <p>REALISTIC NEPALI VILLAGE WORLD</p>
-
-  <div id="hbProgress">
-    <div id="hbProgressBar"></div>
-  </div>
-
-  <div id="hbLoadingStatus">Preparing village...</div>
-`;
-
-document.body.appendChild(loadingScreen);
+function setLoadingProgress(value, message) {
 
 function setLoadingProgress(value, message) {
   const bar = document.getElementById("hbProgressBar");
