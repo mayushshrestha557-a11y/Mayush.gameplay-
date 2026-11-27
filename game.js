@@ -2987,11 +2987,23 @@ function updatePlayer(dt) {
 
     const speed = running ? 6.4 : 2.3;
 
-    playerActor.root.position.x +=
-      nx * speed * dt;
+    const currentPosition = playerActor.root.position;
 
-    playerActor.root.position.z +=
-      nz * speed * dt;
+const nextX =
+  currentPosition.x + nx * speed * dt;
+
+const nextZ =
+  currentPosition.z + nz * speed * dt;
+
+// X AXIS COLLISION
+if (!isPositionBlocked(nextX, currentPosition.z)) {
+  currentPosition.x = nextX;
+}
+
+// Z AXIS COLLISION
+if (!isPositionBlocked(currentPosition.x, nextZ)) {
+  currentPosition.z = nextZ;
+}
 
     const targetRotation = Math.atan2(nx, nz);
 
