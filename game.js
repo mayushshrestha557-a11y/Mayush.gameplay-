@@ -2124,20 +2124,6 @@ errorScreen.style.display = "flex";
 
 const intro = document.getElementById("hbCinematicIntro");
 
-intro.style.cssText = `
-  position:fixed;
-  inset:0;
-  z-index:99999;
-  background:#000;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  color:white;
-  text-align:center;
-  opacity:1;
-  transition:opacity 2s ease;
-
-
 document.getElementById("hbIntroBegin").addEventListener("click", () => {
   const button = document.getElementById("hbIntroBegin");
   button.disabled = true;
