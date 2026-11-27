@@ -3277,6 +3277,7 @@ function animate() {
   }
 
   updatePlayer(dt);
+  updateTraffic(dt);
   updateVillagers(dt);
   updateAnimals(dt);
   updateDog(dt);
