@@ -2536,11 +2536,7 @@ let hbAmbientOn = true;
 let hbAmbientNodes = [];
 let hbBirdTimer = null;
 
-const hbSoundButton = document.createElement("button");
-hbSoundButton.className = "hbButton";
-hbSoundButton.id = "hbSoundToggle";
-hbSoundButton.textContent = "AMBIENT SOUND: ON";
-menu.appendChild(hbSoundButton);
+const hbSoundButton = document.getElementById("hbSoundToggle");
 
 function hbStartAmbientSound() {
   if (!hbAmbientOn || hbAudioContext) return;
