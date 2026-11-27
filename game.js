@@ -3312,6 +3312,12 @@ let lastFrameTime = 0;
 function animate(timestamp = 0) {
   requestAnimationFrame(animate);
 
+  // Limit game updates and rendering to 30 FPS.
+  if (timestamp - lastFrameTime < 1000 / 30) return;
+  lastFrameTime = timestamp;
+
+  const dt = Math.min(clock.getDelta(), 0.04);
+
   // Limit rendering and game updates to 30 FPS on mobile devices.
   if (timestamp - lastFrameTime < 1000 / 30) return;
   lastFrameTime = timestamp;
