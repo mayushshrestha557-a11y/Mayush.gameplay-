@@ -3094,12 +3094,13 @@ let lastMiniMapTime = 0;
 function animate(timestamp = 0) {
   requestAnimationFrame(animate);
 
-  // Limit game updates and rendering to 30 FPS.
-  if (timestamp - lastFrameTime < 1000 / 30) return;
+  const targetFPS = gameStarted && !gamePaused ? 30 : 15;
+
+  if (timestamp - lastFrameTime < 1000 / targetFPS) return;
+
   lastFrameTime = timestamp;
 
   const dt = Math.min(clock.getDelta(), 0.04);
-
 
   elapsed += dt;
 
