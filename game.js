@@ -2450,6 +2450,7 @@ intro.innerHTML = `
     <div class="hbIntroStudio">MAYUSH GAMEPLAY PRESENTS</div>
     <h1>HAMRO BASTI</h1>
     <p>YOUR VILLAGE. YOUR WORLD.</p>
+    <button id="hbIntroBegin">TAP TO BEGIN</button>
   </div>
 `;
 
