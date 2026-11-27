@@ -2499,6 +2499,23 @@ introStyle.textContent = `
     letter-spacing:5px;
     color:#d6a45b;
   }
+  
+  .hbIntroContent {
+  opacity:0;
+}
+
+#hbIntroBegin {
+  display:block;
+  margin:35px auto 0;
+  padding:14px 28px;
+  background:transparent;
+  color:#d6a45b;
+  border:1px solid #d6a45b;
+  border-radius:5px;
+  letter-spacing:3px;
+  font-size:13px;
+  cursor:pointer;
+}
 `;
 document.head.appendChild(introStyle);
 document.body.appendChild(intro);
