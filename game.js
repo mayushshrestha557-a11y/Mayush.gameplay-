@@ -176,41 +176,37 @@ scene.add(fillLight);
    TEXTURE GENERATOR
 ===================================================== */
 
-function makeNoiseTexture(base, colors, amount = 7000) {
+function makeNoiseTexture(base, colors, amount = 2500) {
   const canvas = document.createElement("canvas");
 
-  canvas.width = 512;
-  canvas.height = 512;
+  canvas.width = 256;
+  canvas.height = 256;
 
   const ctx = canvas.getContext("2d");
 
   ctx.fillStyle = base;
-  ctx.fillRect(0, 0, 512, 512);
+  ctx.fillRect(0, 0, 256, 256);
 
   for (let i = 0; i < amount; i++) {
     ctx.globalAlpha = 0.08 + Math.random() * 0.25;
-
     ctx.fillStyle = colors[
       Math.floor(Math.random() * colors.length)
     ];
 
     ctx.beginPath();
-
     ctx.arc(
-      Math.random() * 512,
-      Math.random() * 512,
-      0.4 + Math.random() * 2.4,
+      Math.random() * 256,
+      Math.random() * 256,
+      0.4 + Math.random() * 1.5,
       0,
       Math.PI * 2
     );
-
     ctx.fill();
   }
 
   ctx.globalAlpha = 1;
 
   const texture = new THREE.CanvasTexture(canvas);
-
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -235,7 +231,7 @@ const dirtTexture = makeNoiseTexture("#806044", [
   "#9c7953",
   "#c1a078",
   "#715137"
-], 10000);
+], 3500);
 
 dirtTexture.repeat.set(2, 40);
 M.dirt.map = dirtTexture;
@@ -246,7 +242,7 @@ const asphaltTexture = makeNoiseTexture("#343638", [
   "#292b2d",
   "#555657",
   "#383a3c"
-], 11000);
+], 3500);
 
 asphaltTexture.repeat.set(3, 35);
 
