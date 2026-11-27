@@ -2072,24 +2072,6 @@ function disposeActor(actor) {
 }
 
 /* =====================================================
-   PART 2 END
-   NEXT: ASSET LOADING, INTRO MENU, SETTINGS,
-   MOBILE JOYSTICK, JUMP, CAMERA, MINIMAP,
-   PLAYER MOVEMENT AND MAIN GAME LOOP
-===================================================== */
-
-/* =====================================================
-   HAMRO BASTI — PART 3
-   LOADING, MENU, SETTINGS, CONTROLS AND GAME LOOP
-===================================================== */
-
-/* =====================================================
-   UI STYLES
-===================================================== */
-
-const uiStyle = document.createElement("style");
-
-/* =====================================================
    LOADING SCREEN
 ===================================================== */
 
