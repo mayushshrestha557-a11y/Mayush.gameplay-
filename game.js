@@ -2535,6 +2535,160 @@ menu.innerHTML = `
 document.body.appendChild(menu);
 
 /* =====================================================
+   HAMRO BASTI - NATURAL AMBIENT SOUND
+===================================================== */
+
+let hbAudioContext = null;
+let hbAmbientOn = true;
+let hbAmbientNodes = [];
+let hbBirdTimer = null;
+
+const hbSoundButton = document.createElement("button");
+hbSoundButton.className = "hbButton";
+hbSoundButton.id = "hbSoundToggle";
+hbSoundButton.textContent = "AMBIENT SOUND: ON";
+menu.appendChild(hbSoundButton);
+
+function hbStartAmbientSound() {
+  if (!hbAmbientOn || hbAudioContext) return;
+
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+
+  hbAudioContext = new AudioCtx();
+  const ctx = hbAudioContext;
+
+  ctx.resume();
+
+  // Soft natural wind
+  const buffer = ctx.createBuffer(
+    1, ctx.sampleRate * 4, ctx.sampleRate
+  );
+  const data = buffer.getChannelData(0);
+
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * 0.35;
+  }
+
+  const wind = ctx.createBufferSource();
+  wind.buffer = buffer;
+  wind.loop = true;
+
+  const windFilter = ctx.createBiquadFilter();
+  windFilter.type = "lowpass";
+  windFilter.frequency.value = 350;
+
+  const windGain = ctx.createGain();
+  windGain.gain.value = 0.10;
+
+  wind.connect(windFilter);
+  windFilter.connect(windGain);
+  windGain.connect(ctx.destination);
+  wind.start();
+
+  hbAmbientNodes.push(wind);
+
+  // Gentle bamboo and leaf rustling
+  const leaves = ctx.createBufferSource();
+  leaves.buffer = buffer;
+  leaves.loop = true;
+
+  const leafFilter = ctx.createBiquadFilter();
+  leafFilter.type = "bandpass";
+  leafFilter.frequency.value = 1100;
+
+  const leafGain = ctx.createGain();
+  leafGain.gain.value = 0.025;
+
+  const leafLfo = ctx.createOscillator();
+  const leafLfoGain = ctx.createGain();
+  leafLfo.frequency.value = 0.18;
+  leafLfoGain.gain.value = 0.018;
+
+  leafLfo.connect(leafLfoGain);
+  leafLfoGain.connect(leafGain.gain);
+
+  leaves.connect(leafFilter);
+  leafFilter.connect(leafGain);
+  leafGain.connect(ctx.destination);
+
+  leaves.start();
+  leafLfo.start();
+
+  hbAmbientNodes.push(leaves, leafLfo);
+
+  // Small bird chirps
+  function hbBirdChirp() {
+    if (!hbAudioContext || !hbAmbientOn) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    const now = ctx.currentTime;
+    const frequency = 1800 + Math.random() * 1300;
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(frequency, now);
+    osc.frequency.exponentialRampToValueAtTime(
+      frequency * 1.35, now + 0.10
+    );
+    osc.frequency.exponentialRampToValueAtTime(
+      frequency * 0.8, now + 0.20
+    );
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.035, now + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.23);
+  }
+
+  hbBirdTimer = setInterval(() => {
+    hbBirdChirp();
+    if (Math.random() > 0.5) {
+      setTimeout(hbBirdChirp, 250);
+    }
+  }, 2200 + Math.random() * 1800);
+}
+
+function hbStopAmbientSound() {
+  if (hbBirdTimer) {
+    clearInterval(hbBirdTimer);
+    hbBirdTimer = null;
+  }
+
+  if (hbAudioContext) {
+    hbAudioContext.close();
+    hbAudioContext = null;
+  }
+
+  hbAmbientNodes = [];
+}
+
+hbSoundButton.onclick = () => {
+  hbAmbientOn = !hbAmbientOn;
+
+  hbSoundButton.textContent =
+    hbAmbientOn ? "AMBIENT SOUND: ON" : "AMBIENT SOUND: OFF";
+
+  if (hbAmbientOn && gameStarted) {
+    hbStartAmbientSound();
+  } else {
+    hbStopAmbientSound();
+  }
+};
+
+menu.addEventListener("click", (event) => {
+  if (event.target.closest("#hbStart")) {
+    hbStartAmbientSound();
+  }
+});
+
+/* =====================================================
    SETTINGS PANEL
 ===================================================== */
 
