@@ -2145,10 +2145,10 @@ document.getElementById("hbIntroBegin").addEventListener("click", async () => {
     intro.style.opacity = "0";
 
     setTimeout(() => {
-      intro.style.display = "none";
+      intro.style.display = "flex";
       hbIntroMusic.pause();
       hbIntroMusic.currentTime = 0;
-      intro.style.display = "flex";
+      menu.style.display = "flex";
       button.disabled = false;
     }, 2100);
   }, 8500);
