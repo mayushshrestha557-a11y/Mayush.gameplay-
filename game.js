@@ -2145,7 +2145,7 @@ document.getElementById("hbIntroBegin").addEventListener("click", async () => {
     intro.style.opacity = "0";
 
     setTimeout(() => {
-      intro.style.display = "flex";
+      intro.style.display = "none";
       hbIntroMusic.pause();
       hbIntroMusic.currentTime = 0;
       menu.style.display = "flex";
