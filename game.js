@@ -1921,8 +1921,8 @@ function createBicycle(
 }
 
 function createBicycles() {
+  createBicycle("mountainBike", 2.5, 0, Math.PI);
   createBicycle("electricBike", 20, 5, Math.PI);
-  createBicycle("mountainBike", -20, 8, 0);
   createBicycle("bmxBike", 20, 25, Math.PI / 2);
 }
 
