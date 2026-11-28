@@ -985,7 +985,7 @@ const REQUIRED_ASSETS = [
   "tractor",
   "car",
   "motorcycle",
-  "mointainBike",
+  "mountainBike",
   "tree",
   "shop",
   "well"
