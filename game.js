@@ -3023,7 +3023,7 @@ async function startAssetLoading() {
       assetsLoaded = true;
 
       loadingScreen.style.display = "none";
-      inro.style.display = "flex";
+      intro.style.display = "flex";
 
     } catch (error) {
       console.error("Asset loading error:", error);
