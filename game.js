@@ -997,7 +997,6 @@ const OPTIONAL_ASSETS = [
   "elderlyWoman",
   "grandfather",
   "electricBike",
-  "mountainBike",
   "bmxBike",
   "villageTile",
   "guitar",
