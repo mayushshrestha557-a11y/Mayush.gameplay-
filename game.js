@@ -2148,7 +2148,7 @@ document.getElementById("hbIntroBegin").addEventListener("click", async () => {
       intro.style.display = "none";
       hbIntroMusic.pause();
       hbIntroMusic.currentTime = 0;
-      menu.style.display = "flex";
+      intro.style.display = "flex";
       button.disabled = false;
     }, 2100);
   }, 8500);
