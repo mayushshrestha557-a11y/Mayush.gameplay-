@@ -2120,53 +2120,36 @@ errorScreen.style.display = "flex";
 
 const intro = document.getElementById("hbCinematicIntro");
 
-document.getElementById("hbIntroBegin").addEventListener("click", () => {
+const hbIntroMusic = new Audio(
+  "./assets/damgaz-kathmandu-reverie-399023.mp3"
+);
+
+hbIntroMusic.loop = true;
+hbIntroMusic.volume = 0.55;
+hbIntroMusic.preload = "auto";
+
+document.getElementById("hbIntroBegin").addEventListener("click", async () => {
   const button = document.getElementById("hbIntroBegin");
   button.disabled = true;
 
+  try {
+    await hbIntroMusic.play();
+  } catch (error) {
+    console.error("Intro music error:", error);
+  }
+
   const content = intro.querySelector(".hbIntroContent");
   content.style.animation = "hbIntroReveal 3s ease forwards";
-
-  const AudioContextClass =
-    window.AudioContext || window.webkitAudioContext;
-
-  const audio = new AudioContextClass();
-
-  audio.resume();
-
-  const notes = [
-    392, 440, 523, 440,
-    392, 330, 392, 440,
-    523, 587, 523, 440,
-    392
-  ];
-
-  notes.forEach((frequency, index) => {
-    const start = audio.currentTime + index * 0.58;
-
-    const oscillator = audio.createOscillator();
-    const volume = audio.createGain();
-
-    oscillator.type = "sine";
-    oscillator.frequency.value = frequency;
-
-    volume.gain.setValueAtTime(0, start);
-    volume.gain.linearRampToValueAtTime(0.12, start + 0.08);
-    volume.gain.linearRampToValueAtTime(0, start + 0.52);
-
-    oscillator.connect(volume);
-    volume.connect(audio.destination);
-
-    oscillator.start(start);
-    oscillator.stop(start + 0.55);
-  });
 
   setTimeout(() => {
     intro.style.opacity = "0";
 
     setTimeout(() => {
-      intro.remove();
-      audio.close();
+      intro.style.display = "none";
+      hbIntroMusic.pause();
+      hbIntroMusic.currentTime = 0;
+      menu.style.display = "flex";
+      button.disabled = false;
     }, 2100);
   }, 8500);
 });
