@@ -2339,13 +2339,17 @@ document.getElementById("hbCloseSettings").addEventListener("click", (event) => 
 
 const settings = document.getElementById("hbSettings");
 
-document.getElementById("hbOpenSettings").onclick = () => {
+document.getElementById("hbOpenSettings").addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
   settings.style.display = "flex";
-};
+});
 
-document.getElementById("hbCloseSettings").onclick = () => {
+document.getElementById("hbCloseSettings").addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
   settings.style.display = "none";
-};
+});
 
 document.getElementById("hbSaveSettings").onclick = () => {
   joystickSensitivity = Number(
