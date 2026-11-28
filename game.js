@@ -3058,14 +3058,12 @@ async function startAssetLoading() {
    START AND RESUME GAME
 ===================================================== */
 
-document.getElementById("hbStart").onclick = () => {
-  if (!assetsLoaded || !playerActor) return;
+document.getElementById("hbStart").addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
 
-  if (gameStarted && gamePaused) {
-    gamePaused = false;
-    menu.style.display = "none";
-    document.getElementById("hbStart").textContent =
-      "START GAME";
+  if (!assetsLoaded || !playerActor) {
+    document.getElementById("hbStart").textContent = "LOADING...";
     return;
   }
 
@@ -3076,10 +3074,16 @@ document.getElementById("hbStart").onclick = () => {
   settings.style.display = "none";
   hud.style.display = "block";
 
+  document.getElementById("hbStart").textContent = "START GAME";
+
   cameraYaw = playerActor.root.rotation.y;
 
+  if (hbAmbientOn) {
+    hbStartAmbientSound();
+  }
+
   updateCamera(1 / 60);
-};
+});
 
 /* =====================================================
    MAIN GAME LOOP
